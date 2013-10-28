@@ -13,17 +13,17 @@
 \section{Présentation du projet}
 \subsection{\texttt{DisCoVEry}}
 
-Le Projet \texttt{DisCoVEry} est un projet qui est né suite à l’impulsion du département de recherche en informatique des Mines de Nantes. Ce projet consiste à explorer ce que pourrait être le modèle d’après cloud qui est en pleine expansion. En effet, il apparaît que ce modèle est construit autour de centre de données centralisés qui eux même peuvent être excentrés géographiquement des zones d’utilisation. De cette remarque vient  le modèle \texttt{DisCoVEry} : rapporter les serveurs auprès des utilisateurs. Plus précisément les rapporter au niveau des différents noeuds de réseau, de manière à construire un cloud complètement décentralisé.
+Le Projet \texttt{DisCoVEry} est un projet qui est né suite à l’impulsion du département de recherche en informatique de l'Ecole des Mines de Nantes. Ce projet consiste à explorer ce que pourrait être le modèle d’après cloud qui est en pleine expansion. En effet, il apparaît que ce modèle est construit autour de centre de données centralisés qui eux même peuvent être excentrés géographiquement des zones d’utilisation. De cette remarque vient  le modèle \texttt{DisCoVEry} : rapporter les serveurs auprès des utilisateurs. Plus précisément les rapporter au niveau des différents noeuds de réseau, de manière à construire un cloud complètement décentralisé.
 
 \subsection{Algorithme \texttt{Vivaldi}}
 L'algorithme \texttt{Vivaldi} \cite{vivaldi} est un algorithme distribué qui permet  de donner à un ensemble de noeuds interconnectés des coordonnées dans un plan en fonction de leur éloignement physique.
-\texttt{Vivaldi} fonctionne de manière décentralisée. Chaque noeud a sa position qui est déterminée dans l’espace. Cette détermination passe par une simulation physique d’un système de ressorts. En effet chaque noeud calcule son RTT (Round Trip Time) par rapport à un certain nombre de noeuds (pas tous !) et calcule l’erreur par rapport à sa position dans le système. Cette erreur permet au “ressort” de s’ajuster et donc le noeud bouge en position.
-Ensuite, une fois les positions obtenues, les noeuds les plus proches sont calculés grâce à un algorithme semblable a Djkistra.
+\texttt{Vivaldi} fonctionne de manière décentralisée. Chaque noeud a sa position qui est déterminée dans l’espace. Cette détermination passe par une simulation physique d’un système de ressorts . Chaque noeud calcule son RTT (Round Trip Time) par rapport à un certain nombre de noeuds (pas tous !), et modifie des ressorts dans le système pour representer ce RTT. L’erreur par rapport à sa position dans le système est ensuite calculé. Cette erreur permet au “ressort” de s’ajuster et donc le noeud bouge en position.
+Ensuite, une fois les positions obtenues, les noeuds les plus proches sont calculés grâce à un algorithme de parcours de graphe, dans lequel il y a une partage d'informations de position entre noeuds.
 
 \section{Objectifs}
 Le principal objectif de ce projet est d'implémenter l'algorithme \texttt{Vivaldi} au sein du projet \texttt{DisCoVEry}. Cet algorithme servira à déterminer la machine la plus proche par rapport à la machine courante.\\
 
-Pour cela, quatre tâche seront réalisées :
+Pour cela, quatre tâches seront réalisées :
 \begin{itemize}
 \item Mise en \oe uvre du réseau logique Vivaldi en suivant un modèle de programmation de type acteur
 \item Mise en \oe uvre d’une API permettant d’exploiter cette notion de distance
@@ -33,7 +33,7 @@ depuis les mécanismes de plus haut niveau
 \end{itemize}
 
 \section{Méthodologie}
-Ce projet sera réalisé en autonomie avec des réunions régulières suivant une méthode agile. Il consistera en la contribution au projet open source \texttt{DisCoVEry}, notamment en ajoutant l'algorithme \texttt{Vivaldi} au projet \texttt{AkkaArc}. \texttt{Vivaldi} devra être capable de remplacer l'implémentation de \texttt{Chord} actuellement en place sans impacter le fonctionnement extérieur.
+Ce projet sera réalisé en autonomie avec des réunions régulières suivant une méthode agile. Il consistera en la contribution au projet open source \texttt{DisCoVEry}, notamment en ajoutant l'algorithme \texttt{Vivaldi} au projet \texttt{AkkaArc}. \texttt{Vivaldi} devra être capable de remplacer l'implémentation de \texttt{Chord} actuellement en place sans impacter le fonctionnement extérieur, notamment la partie concernant les testes déjà codés.
 
 Comme pour le reste du projet \texttt{AkkaArc}, le language \texttt{Scala} sera utilisé avec l'aide d'\texttt{Akka}.\\
 
