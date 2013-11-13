@@ -6,6 +6,7 @@
 \usepackage{amsfonts}
 \usepackage{amssymb}
 \usepackage{listings}
+\usepackage{graphicx}
 
 
 % "define" Scala
@@ -124,9 +125,13 @@ nextNodes(origin: Node, excluded: Set[Node], numberOfNodes: Integer): Node
 
 \subsection{Le Modèle Acteur}
 
-  Pour simplifier la division du travail et pour avoir un système plus modulaire, on se base sur le modèle acteur pour la coordination entre parties. Chaque système a son contexte d’exécution indépendant, et la communication entre chaque acteur se passe que par envoi de message (et pas par mémoire partagée ou verrous). Ceci nous permet de créer un programme modulaire et éviter toute une classe d’erreurs liée à la synchronisation.
+Pour simplifier la division du travail et pour avoir un système plus modulaire, on se base sur le modèle acteur pour la coordination entre parties. Chaque système a son contexte d’exécution indépendant, et la communication entre chaque acteur se passe que par envoi de message (et pas par mémoire partagée ou verrous). Ceci nous permet de créer un programme modulaire et éviter toute une classe d’erreurs liée à la synchronisation.
 
  Dans notre cas,  on utilise la bibliothèque Akka de Scala comme infrastructure d’acteur.
+\begin{figure}[h]
+   \caption{\label{acteur} Modèle Acteur}
+   \includegraphics[scale=0.5]{acteur}
+\end{figure}
 
 \section{Organisation de l’équipe}
 
