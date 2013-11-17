@@ -5,6 +5,14 @@ This project is an implementation of the Vivaldi algorithm.
 
 À suivre une description plus détaillée.
 
+How to use
+==========
+This project uses SBT. Please first install sbt on your computer (the version used is 0.13). I've added the `sbt-idea` plugin dependency to the project so we can use IntelliJ Idea.
+
+To open the project in IntelliJ Idea for the first time, run `sbt gen-idea` in the project directory. You can then open the project in IntelliJ Idea (remember to install the Scala plugin).
+
+To compile, `sbt compile`, to run `sbt run` and to test `sbt test`. Simple enough?
+
 Bonnes pratiques
 ================
 
