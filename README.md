@@ -26,7 +26,7 @@ Gestion des packages
 --------------------
 J'ai créé un modèle de classe Scala dans tous les packages, libre à vous de vous réorganiser à l'intérieur de ceux-ci. J'ai créé un package `dto` dans lequel je met tous les types de messages qui vont
 transiter entre les modules. Utilisez ces objets là pour envoyer ou recevoir les messages comme ça tout le monde utilise la même chose.
-Si vous avez besoin de rajouter ou de modifier des objets, faites un pull request.
+Si vous avez besoin de rajouter ou de modifier des objets, faites une pull request.
 
 Logging
 -------

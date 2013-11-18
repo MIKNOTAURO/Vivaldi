@@ -1,7 +1,8 @@
 package org.discovery.vivaldi.network
 
-import akka.actor.Actor
+import akka.actor.{ActorRef, Actor}
 import akka.event.Logging
+import org.discovery.vivaldi.dto.{RPSInfo, DoRPSRequest}
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -22,13 +23,23 @@ import akka.event.Logging
  * limitations under the License.
  * ============================================================ */
 
-class Communication extends Actor {
+class Communication(vivaldiCore: ActorRef) extends Actor {
 
   val log = Logging(context.system, this)
 
+  var rps: Iterable[RPSInfo] = Set[RPSInfo]()
+
   def receive = {
-    case "Test" => log.info("Message reçu")
+    case DoRPSRequest(numberOfNodesToContact) => contactNodes(numberOfNodesToContact)
     case _ => log.info("Message Inconnu")
+  }
+
+  def contactNodes(numberOfNodesToContact: Int) {
+    log.debug(s"Order to contact $numberOfNodesToContact received")
+    //Communication with other nodes
+    log.debug("RPS request completed")
+    log.debug("Sending new RPS to vivaldi core")
+    vivaldiCore ! rps
   }
 
 }

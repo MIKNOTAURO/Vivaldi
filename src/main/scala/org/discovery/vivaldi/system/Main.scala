@@ -1,7 +1,10 @@
 package org.discovery.vivaldi.system
 
 import akka.event.Logging
-import akka.actor.Actor
+import akka.actor.{Props, ActorSystem, Actor}
+import org.discovery.vivaldi.core.ComputingAlgorithm
+import org.discovery.vivaldi.dto.{RPSInfo, Coordinates, UpdatedCoordinates}
+import org.discovery.vivaldi.network.Communication
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -26,9 +29,21 @@ class Main extends Actor{
 
   val log = Logging(context.system, this)
 
+  //Creating child actors
+  val vivaldiCore = context.actorOf(Props(classOf[ComputingAlgorithm], self), "VivaldiCore")
+  val network = context.actorOf(Props(classOf[Communication], vivaldiCore), "Network")
+
+  var coordinates: Coordinates = Coordinates(0,0)
+
   def receive = {
-    case "Test" => log.info("Message reçu")
+    case UpdatedCoordinates(newCoordinates, rps) => updateCoordinates(newCoordinates, rps)
     case _ => log.info("Message Inconnu")
+  }
+
+  def updateCoordinates(newCoordinates: Coordinates, rps: Iterable[RPSInfo]) {
+    log.debug(s"New coordinated received: $newCoordinates")
+    coordinates = newCoordinates
+    //Compute the new neighbours table
   }
 
 }

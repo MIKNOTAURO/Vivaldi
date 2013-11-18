@@ -30,6 +30,6 @@ case class DoRPSRequest(numberOfNodesToContact: Int) //Message Système-Réseau
 
 case class FirstContact(node: ActorRef) //Message Système-Réseau (pour l'initialisation)
 
-case class updatedRPS(RPSTable: Iterable[RPSInfo]) //Message Réseau-Vivaldi
+case class UpdatedRPS(rps: Iterable[RPSInfo]) //Message Réseau-Vivaldi
 
-case class updatedCoordinates(coordinates: Coordinates, RPSTable: Iterable[RPSInfo])  //Message Vivaldi-Système
+case class UpdatedCoordinates(coordinates: Coordinates, RPSTable: Iterable[RPSInfo])  //Message Vivaldi-Système

@@ -1,7 +1,8 @@
 package org.discovery.vivaldi.core
 
-import akka.actor.Actor
+import akka.actor.{ActorRef, Actor}
 import akka.event.Logging
+import org.discovery.vivaldi.dto.{UpdatedCoordinates, Coordinates, RPSInfo, UpdatedRPS}
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -22,13 +23,22 @@ import akka.event.Logging
  * limitations under the License.
  * ============================================================ */
 
- class ComputingAlgorithm extends Actor {
+ class ComputingAlgorithm(system: ActorRef) extends Actor {
 
    val log = Logging(context.system, this)
 
    def receive = {
-     case "Test" => log.info("Message reçu")
+     case UpdatedRPS(rps) => compute(rps)
      case _ => log.info("Message Inconnu")
+   }
+
+   def compute(rps: Iterable[RPSInfo]) {
+     log.debug(s"Received RPS $rps")
+     //Vivaldi algorithm
+     val coordinates = Coordinates(1, 1)
+     log.debug(s"New coordinates computed: $coordinates")
+     log.debug("Sending coordinates to the system actor")
+     system ! UpdatedCoordinates(coordinates, rps) //Envoi des coordonnées calculées à la brique Système
    }
 
 }
