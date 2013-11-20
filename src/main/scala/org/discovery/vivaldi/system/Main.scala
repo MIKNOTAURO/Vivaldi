@@ -35,7 +35,7 @@ class Main extends Actor{
   val network = context.actorOf(Props(classOf[Communication], vivaldiCore), "Network")
 
   var coordinates: Coordinates = Coordinates(0,0)
-  var closeNodes: Iterable[CloseNodeInfo] = List()
+  var closeNodes: List[CloseNodeInfo] = List()
 
   /**
    * Method that handles the oncoming messages
@@ -54,11 +54,18 @@ class Main extends Actor{
   def updateCoordinates(newCoordinates: Coordinates, rps: Iterable[RPSInfo]) {
     log.debug(s"New coordinated received: $newCoordinates")
     coordinates = newCoordinates
-    //Compute the new neighbours table
-    var RPSNodesDistances: Iterable[CloseNodeInfo] = List()
-    for (node <- rps){
-      RPSNodesDistances::CloseNodeInfo(node.node,computeDistanceToSelf(node))
+
+    log.debug("Computing & updating distances")
+    for (nodeRPS <- rps ; closeNode <- closeNodes){
+      if (nodeRPS.node.equals(closeNode.node)){
+        closeNode.copy(distanceFromSelf = computeDistanceToSelf(nodeRPS))
+      }else {
+        closeNodes::CloseNodeInfo(nodeRPS.node,computeDistanceToSelf(nodeRPS))
+      }
     }
+
+    log.debug("Ordering closest node List")
+    closeNodes.sortWith(SortCloseNodeInfo)
   }
 
   /**
@@ -68,6 +75,16 @@ class Main extends Actor{
    */
   def computeDistanceToSelf(node: RPSInfo): Double = {
     hypot(coordinates.x-node.coordinates.x,coordinates.y-node.coordinates.y)
+  }
+
+  /**
+   * Method to compare the distance between two nodes
+   * @param node1
+   * @param node2
+   * @return true if node1 is closest from self than node2
+   */
+  def SortCloseNodeInfo(node1: CloseNodeInfo, node2: CloseNodeInfo): Boolean ={
+    node1.distanceFromSelf < node2.distanceFromSelf
   }
 
   def initSystem(){
