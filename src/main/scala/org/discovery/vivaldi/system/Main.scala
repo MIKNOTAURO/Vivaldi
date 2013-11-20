@@ -46,4 +46,8 @@ class Main extends Actor{
     //Compute the new neighbours table
   }
 
+  def initSystem(){
+
+  }
+
 }
