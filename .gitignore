@@ -6,13 +6,17 @@ tmp
 .history
 dist
 /.idea
-/*.iml
+*.iml
 /out
 /.idea_modules
 /.classpath
 /.project
 /RUNNING_PID
 /.settings
+
+# temp file 
+\#*
+.\#*
 
 # LaTeX gitignore
 *.acn
