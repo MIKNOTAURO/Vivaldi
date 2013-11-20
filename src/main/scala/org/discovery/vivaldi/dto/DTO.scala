@@ -23,7 +23,7 @@ import akka.actor.ActorRef
 
 case class RPSInfo(node: ActorRef, coordinates: Coordinates, ping: Long)
 
-case class CloseNodeInfo(node: ActorRef, distanceFromSelf: Double)
+case class CloseNodeInfo(node: ActorRef, coordinates: Coordinates, distanceFromSelf: Double)
 
 case class Coordinates(x: Long, y: Long)
 

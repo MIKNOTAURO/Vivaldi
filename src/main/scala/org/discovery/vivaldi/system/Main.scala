@@ -56,11 +56,13 @@ class Main extends Actor{
     coordinates = newCoordinates
 
     log.debug("Computing & updating distances")
-    for (nodeRPS <- rps ; closeNode <- closeNodes){
-      if (nodeRPS.node.equals(closeNode.node)){
-        closeNode.copy(distanceFromSelf = computeDistanceToSelf(nodeRPS))
-      }else {
-        closeNodes::CloseNodeInfo(nodeRPS.node,computeDistanceToSelf(nodeRPS))
+    for (closeNode <- closeNodes){
+      for(nodeRPS <- rps){
+        if (nodeRPS.node.equals(closeNode.node)){
+          closeNode.copy(distanceFromSelf = computeDistanceToSelf(nodeRPS))
+        }else {
+          CloseNodeInfo(nodeRPS.node ,nodeRPS.coordinates, computeDistanceToSelf(nodeRPS)) :: closeNodes
+        }
       }
     }
 
