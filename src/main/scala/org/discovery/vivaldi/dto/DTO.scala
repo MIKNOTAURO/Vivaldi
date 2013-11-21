@@ -34,6 +34,6 @@ case class DoRPSRequest(numberOfNodesToContact: Int) // System-Network Message
 
 case class FirstContact(node: ActorRef) //System-Network Message
 
-case class UpdatedRPS(rps: Seq[RPSInfo]) // Network-Vivaldi Message
+case class UpdatedRPS(rps: Iterable[RPSInfo]) // Network-Vivaldi Message
 
-case class UpdatedCoordinates(coordinates: Coordinates, RPSTable: Seq[RPSInfo])  // Vivaldi-System Message
+case class UpdatedCoordinates(coordinates: Coordinates, RPSTable: Iterable[RPSInfo])  // Vivaldi-System Message

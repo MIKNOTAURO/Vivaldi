@@ -50,9 +50,12 @@ class Main extends Actor{
   /**
    * Method to update the close node list coordinates.
    * @param newCoordinates updated coordinates of the current node just calculates
-   * @param rps list of the RPS nodes that will be used to update the close node list
+   * @param rpsIterable list of the RPS nodes that will be used to update the close node list
    */
-  def updateCoordinates(newCoordinates: Coordinates, rps: Seq[RPSInfo]) {
+  def updateCoordinates(newCoordinates: Coordinates, rpsIterable: Iterable[RPSInfo]) {
+
+    val rps = rpsIterable.toSeq
+
     log.debug(s"New coordinated received: $newCoordinates")
     coordinates = newCoordinates
 
