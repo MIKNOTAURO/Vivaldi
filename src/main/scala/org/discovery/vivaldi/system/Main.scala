@@ -58,20 +58,20 @@ class Main extends Actor{
 
     log.debug("Computing & updating distances")
     //Computing the distances from the RPS table
-    val RPSCloseNodes = rps.map((node: RPSInfo) => CloseNodeInfo(node.node,node.coordinates,computeDistanceToSelf(node.coordinates)))
+    val RPSCloseNodes = rps.map(node => CloseNodeInfo(node.node,node.coordinates,computeDistanceToSelf(node.coordinates)))
 
     //TODO Test contain with data and code the method equals for closeNodes
-    //Get rid of the nodes already in the list
-    val RPSCloseNodesToAdd = RPSCloseNodes.filter((node: CloseNodeInfo) => !closeNodes.contains(node))
     //Retrieve nodes to update
-    val RPSCloseNodesUpdates = RPSCloseNodes.filter((node: CloseNodeInfo) => closeNodes.contains(node))
+    val RPSCloseNodesUpdates = RPSCloseNodes.intersect(closeNodes)
+    //Get rid of the nodes already in the list
+    val RPSCloseNodesToAdd = RPSCloseNodes.filterNot(RPSCloseNodesUpdates.contains(_))
 
     //Updating nodes
     for (rpsNode <- RPSCloseNodesUpdates){
-      closeNodes = closeNodes.map((node: CloseNodeInfo) => if (rpsNode.equals(node)) node.copy(coordinates = rpsNode.coordinates) else node.copy())
+      closeNodes = closeNodes.map(node => if (rpsNode == node) node.copy(coordinates = rpsNode.coordinates) else node)
     }
     //Computing and updating distances for the existing nodes
-    closeNodes = closeNodes.map((node: CloseNodeInfo) => node.copy(distanceFromSelf = computeDistanceToSelf(this.coordinates)))
+    closeNodes = closeNodes.map(node => node.copy(distanceFromSelf = computeDistanceToSelf(this.coordinates)))
 
     //Adding new Nodes
     closeNodes = RPSCloseNodesToAdd ++ closeNodes
