@@ -36,7 +36,7 @@ class Main extends Actor{
   val network = context.actorOf(Props(classOf[Communication], vivaldiCore), "Network")
 
   var coordinates: Coordinates = Coordinates(0,0)
-  var closeNodes: List[CloseNodeInfo] = List()
+  var closeNodes: Seq[CloseNodeInfo] = Seq()
 
   /**
    * Method that handles the oncoming messages
@@ -52,7 +52,7 @@ class Main extends Actor{
    * @param newCoordinates updated coordinates of the current node just calculates
    * @param rps list of the RPS nodes that will be used to update the close node list
    */
-  def updateCoordinates(newCoordinates: Coordinates, rps: List[RPSInfo]) {
+  def updateCoordinates(newCoordinates: Coordinates, rps: Seq[RPSInfo]) {
     log.debug(s"New coordinated received: $newCoordinates")
     coordinates = newCoordinates
 

@@ -32,7 +32,7 @@ import org.discovery.vivaldi.dto.{UpdatedCoordinates, Coordinates, RPSInfo, Upda
      case _ => log.info("Message Inconnu")
    }
 
-   def compute(rps: List[RPSInfo]) {
+   def compute(rps: Seq[RPSInfo]) {
      log.debug(s"Received RPS $rps")
      //Vivaldi algorithm
      val coordinates = Coordinates(1, 1)
