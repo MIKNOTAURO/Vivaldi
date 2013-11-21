@@ -6,6 +6,7 @@ import org.discovery.vivaldi.core.ComputingAlgorithm
 import org.discovery.vivaldi.dto.{CloseNodeInfo, RPSInfo, Coordinates, UpdatedCoordinates}
 import org.discovery.vivaldi.network.Communication
 import scala.math._
+import scala.util.Sorting.quickSort
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -51,42 +52,42 @@ class Main extends Actor{
    * @param newCoordinates updated coordinates of the current node just calculates
    * @param rps list of the RPS nodes that will be used to update the close node list
    */
-  def updateCoordinates(newCoordinates: Coordinates, rps: Iterable[RPSInfo]) {
+  def updateCoordinates(newCoordinates: Coordinates, rps: List[RPSInfo]) {
     log.debug(s"New coordinated received: $newCoordinates")
     coordinates = newCoordinates
 
     log.debug("Computing & updating distances")
-    for (closeNode <- closeNodes){
-      for(nodeRPS <- rps){
-        if (nodeRPS.node.equals(closeNode.node)){
-          closeNode.copy(distanceFromSelf = computeDistanceToSelf(nodeRPS))
-        }else {
-          CloseNodeInfo(nodeRPS.node ,nodeRPS.coordinates, computeDistanceToSelf(nodeRPS)) :: closeNodes
-        }
-      }
+    //Computing the distances from the RPS table
+    val RPSCloseNodes = rps.map((node: RPSInfo) => CloseNodeInfo(node.node,node.coordinates,computeDistanceToSelf(node.coordinates)))
+
+    //TODO Test contain with data and code the method equals for closeNodes
+    //Get rid of the nodes already in the list
+    val RPSCloseNodesToAdd = RPSCloseNodes.filter((node: CloseNodeInfo) => !closeNodes.contains(node))
+    //Retrieve nodes to update
+    val RPSCloseNodesUpdates = RPSCloseNodes.filter((node: CloseNodeInfo) => closeNodes.contains(node))
+
+    //Updating nodes
+    for (rpsNode <- RPSCloseNodesUpdates){
+      closeNodes = closeNodes.map((node: CloseNodeInfo) => if (rpsNode.equals(node)) node.copy(coordinates = rpsNode.coordinates) else node.copy())
     }
+    //Computing and updating distances for the existing nodes
+    closeNodes = closeNodes.map((node: CloseNodeInfo) => node.copy(distanceFromSelf = computeDistanceToSelf(this.coordinates)))
+
+    //Adding new Nodes
+    closeNodes = RPSCloseNodesToAdd ++ closeNodes
 
     log.debug("Ordering closest node List")
-    closeNodes.sortWith(SortCloseNodeInfo)
+    closeNodes.sorted
+    //TODO Troncate the list to only keep the n first element. We first have to define the configuration part
   }
 
   /**
    * Method to compute the distance between the current node and the node in parameter
-   * @param node to compute the distance from
+   * @param externCoordinates to compute the distance from
    * @return
    */
-  def computeDistanceToSelf(node: RPSInfo): Double = {
-    hypot(coordinates.x-node.coordinates.x,coordinates.y-node.coordinates.y)
-  }
-
-  /**
-   * Method to compare the distance between two nodes
-   * @param node1
-   * @param node2
-   * @return true if node1 is closest from self than node2
-   */
-  def SortCloseNodeInfo(node1: CloseNodeInfo, node2: CloseNodeInfo): Boolean ={
-    node1.distanceFromSelf < node2.distanceFromSelf
+  def computeDistanceToSelf(externCoordinates: Coordinates): Double = {
+    hypot(coordinates.x-externCoordinates.x,coordinates.y-externCoordinates.y)
   }
 
   def initSystem(){

@@ -23,15 +23,17 @@ import akka.actor.ActorRef
 
 case class RPSInfo(node: ActorRef, coordinates: Coordinates, ping: Long)
 
-case class CloseNodeInfo(node: ActorRef, coordinates: Coordinates, distanceFromSelf: Double)
+case class CloseNodeInfo(node: ActorRef, coordinates: Coordinates, distanceFromSelf: Double) extends Ordered[CloseNodeInfo] {
+  def compare(that: CloseNodeInfo) = (this.distanceFromSelf - that.distanceFromSelf).signum
+}
 
 case class Coordinates(x: Long, y: Long)
 
 
-case class DoRPSRequest(numberOfNodesToContact: Int) //Message Système-Réseau
+case class DoRPSRequest(numberOfNodesToContact: Int) // System-Network Message
 
-case class FirstContact(node: ActorRef) //Message Système-Réseau (pour l'initialisation)
+case class FirstContact(node: ActorRef) //System-Network Message
 
-case class UpdatedRPS(rps: Iterable[RPSInfo]) //Message Réseau-Vivaldi
+case class UpdatedRPS(rps: Iterable[RPSInfo]) // Network-Vivaldi Message
 
-case class UpdatedCoordinates(coordinates: Coordinates, RPSTable: Iterable[RPSInfo])  //Message Vivaldi-Système
+case class UpdatedCoordinates(coordinates: Coordinates, RPSTable: List[RPSInfo])  // Vivaldi-System Message
