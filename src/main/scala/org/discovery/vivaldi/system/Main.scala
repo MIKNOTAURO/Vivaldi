@@ -65,16 +65,14 @@ class Main extends Actor{
 
     //TODO Test contain with data and code the method equals for closeNodes
     //Retrieve nodes to update
-    val RPSCloseNodesUpdates = RPSCloseNodes.intersect(closeNodes)
+    val RPSCloseNodesUpdates = RPSCloseNodes intersect closeNodes
     //Get rid of the nodes already in the list
-    val RPSCloseNodesToAdd = RPSCloseNodes.filterNot(RPSCloseNodesUpdates.contains(_))
+    val RPSCloseNodesToAdd = RPSCloseNodes.filterNot(RPSCloseNodesUpdates contains)
 
-    //Updating nodes
-    for (rpsNode <- RPSCloseNodesUpdates){
-      closeNodes = closeNodes.map(node => if (rpsNode == node) node.copy(coordinates = rpsNode.coordinates) else node)
-    }
     //Computing and updating distances for the existing nodes
     closeNodes = closeNodes.map(node => node.copy(distanceFromSelf = computeDistanceToSelf(this.coordinates)))
+    //Updating RPS nodes already in closeNodes
+    closeNodes =  RPSCloseNodesUpdates ++ closeNodes.filterNot(RPSCloseNodesUpdates contains)
 
     //Adding new Nodes
     closeNodes = RPSCloseNodesToAdd ++ closeNodes
