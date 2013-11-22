@@ -25,6 +25,8 @@ case class RPSInfo(node: ActorRef, coordinates: Coordinates, ping: Long)
 
 case class CloseNodeInfo(node: ActorRef, coordinates: Coordinates, distanceFromSelf: Double) extends Ordered[CloseNodeInfo] {
   def compare(that: CloseNodeInfo) = (this.distanceFromSelf - that.distanceFromSelf).signum
+
+  def equals(that: CloseNodeInfo) = this.node.path == that.node.path
 }
 
 case class Coordinates(x: Long, y: Long)
