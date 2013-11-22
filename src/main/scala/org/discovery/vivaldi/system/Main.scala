@@ -8,6 +8,8 @@ import org.discovery.vivaldi.dto.DoRPSRequest
 import org.discovery.vivaldi.dto.{CloseNodeInfo, RPSInfo, Coordinates, UpdatedCoordinates}
 import org.discovery.vivaldi.network.Communication
 import scala.math._
+import scala.concurrent.ExecutionContext
+import ExecutionContext.Implicits.global
 
 /* ============================================================
  * Discovery Project - AkkaArc
