@@ -3,8 +3,13 @@ package org.discovery.vivaldi.system
 import akka.event.Logging
 import akka.actor.{Props, ActorSystem, Actor}
 import org.discovery.vivaldi.core.ComputingAlgorithm
-import org.discovery.vivaldi.dto.{RPSInfo, Coordinates, UpdatedCoordinates}
+import org.discovery.vivaldi.dto._
 import org.discovery.vivaldi.network.Communication
+import scala.concurrent.duration._
+import org.discovery.vivaldi.dto.Coordinates
+import org.discovery.vivaldi.dto.RPSInfo
+import org.discovery.vivaldi.dto.UpdatedCoordinates
+import org.discovery.vivaldi.dto.DoRPSRequest
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -48,6 +53,28 @@ class Main extends Actor{
 
   def initSystem(){
 
+  }
+
+
+
+  /**
+   *  First call made
+  Used to init the system with a first node
+   */
+  val initScheduler = context.system.scheduler.scheduleOnce(0.millis){
+     //network ! FirstContact()
+  }
+
+
+  /**
+   *  Creates a scheduler
+  Calls network with case class DoRPSRequest in argument
+  First call will be made after 50 ms
+  Calls made each 50 ms
+   */
+  val schedulerRPS = context.system.scheduler.schedule(50.millis, 50.millis){
+    log.debug("Scheduler for RPS request called")
+    network ! DoRPSRequest(10)
   }
 
 }
