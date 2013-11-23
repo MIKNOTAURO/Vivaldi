@@ -21,13 +21,43 @@ import akka.actor.ActorRef
  * limitations under the License.
  * ============================================================ */
 
-case class RPSInfo(node: ActorRef, coordinates: Coordinates, ping: Long)
+/**
+ * Trait defining the common properties of a node
+ */
+trait nodeInfo {
+  val node: ActorRef
+  val systemInfo: SystemInfo
+  val coordinates: Coordinates
+}
 
-case class CloseNodeInfo(node: ActorRef, coordinates: Coordinates, distanceFromSelf: Double) extends Ordered[CloseNodeInfo] {
+/**
+ * Class containing the information about a node during the RPS process
+ * @param node
+ * @param systemInfo
+ * @param coordinates
+ * @param ping
+ */
+case class RPSInfo(node: ActorRef, systemInfo: SystemInfo, coordinates: Coordinates, ping: Long) extends nodeInfo
+
+/**
+ * Class containing the information about a node and its distance from the current node.
+ * @param node
+ * @param systemInfo
+ * @param coordinates
+ * @param distanceFromSelf
+ */
+case class CloseNodeInfo(node: ActorRef, systemInfo: SystemInfo, coordinates: Coordinates, distanceFromSelf: Double) extends nodeInfo with Ordered[CloseNodeInfo] {
   def compare(that: CloseNodeInfo) = (this.distanceFromSelf - that.distanceFromSelf).signum
 
   def equals(that: CloseNodeInfo) = this.node.path == that.node.path
 }
+
+/**
+ * Class containing information about the machine on which the node is running
+ * @param cores
+ * @param memory
+ */
+case class SystemInfo(cores: Int, memory: Long)
 
 case class Coordinates(x: Long, y: Long)
 
