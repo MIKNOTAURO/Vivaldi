@@ -99,12 +99,32 @@ class Main extends Actor{
   }
 
 
+  /**
+   * Created by configuration file
+   */
+  val firstCallTime = context.system.settings.config.getString(
+    "vivaldi.system.init.firstCallTime"
+  ).toInt
+
+  /**
+   * Created by configuration file
+   */
+  val timeBetweenCalls = context.system.settings.config.getString(
+    "vivaldi.system.init.timeBetweenCalls"
+  ).toInt
+
+  /**
+   * Created by configuration file
+   */
+  val numberOfNodesCalled = context.system.settings.config.getString(
+    "vivaldi.system.init.numberOfNodesCalled"
+  ).toInt
 
   /**
    *  First call made
   Used to init the system with a first node
    */
-  val initScheduler = context.system.scheduler.scheduleOnce(0.millis){
+  val initScheduler = context.system.scheduler.scheduleOnce(firstCallTime.millis){
      //network ! FirstContact()
   }
 
@@ -115,9 +135,10 @@ class Main extends Actor{
   First call will be made after 50 ms
   Calls made each 50 ms
    */
-  val schedulerRPS = context.system.scheduler.schedule(50.millis, 50.millis){
+  val schedulerRPS = context.system.scheduler.schedule(timeBetweenCalls.millis, timeBetweenCalls.millis){
     log.debug("Scheduler for RPS request called")
-    network ! DoRPSRequest(10)
+    log.debug(s"$numberOfNodesCalled nodes will be called")
+    network ! DoRPSRequest(numberOfNodesCalled)
   }
 
 }
