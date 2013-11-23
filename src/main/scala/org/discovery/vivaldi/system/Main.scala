@@ -61,7 +61,7 @@ class Main extends Actor{
 
     log.debug("Computing & updating distances")
     //Computing the distances from the RPS table
-    val RPSCloseNodes = rps.map(node => CloseNodeInfo(node.node,node.coordinates,computeDistanceToSelf(node.coordinates)))
+    val RPSCloseNodes = rps.map(node => CloseNodeInfo(node.node, node.systemInfo, node.coordinates,computeDistanceToSelf(node.coordinates)))
 
     //TODO Test contain with data and code the method equals for closeNodes
     //Retrieve nodes to update
