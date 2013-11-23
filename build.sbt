@@ -1,4 +1,4 @@
-name := "hello"
+name := "VivaldiGSI"
 
 version := "0.1"
 
