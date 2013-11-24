@@ -99,25 +99,18 @@ class Main extends Actor{
   }
 
 
-  /**
-   * Created by configuration file
-   */
-  val firstCallTime = context.system.settings.config.getString(
-    "vivaldi.system.init.firstCallTime"
+  val config = context.system.settings.config.getConfig("vivaldi.system.init")
+
+  val firstCallTime = config.getString(
+    "firstCallTime"
   ).toInt
 
-  /**
-   * Created by configuration file
-   */
-  val timeBetweenCalls = context.system.settings.config.getString(
-    "vivaldi.system.init.timeBetweenCalls"
+  val timeBetweenCalls = config.getString(
+    "timeBetweenCalls"
   ).toInt
 
-  /**
-   * Created by configuration file
-   */
-  val numberOfNodesCalled = context.system.settings.config.getString(
-    "vivaldi.system.init.numberOfNodesCalled"
+  val numberOfNodesCalled = config.getString(
+    "numberOfNodesCalled"
   ).toInt
 
   /**
