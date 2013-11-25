@@ -8,19 +8,19 @@ This is the project architecture:
 
 System
 ------
-The System part is both the conductor and the keeper of the close node list. It is the part that parses the configuration file to handle initialisation of the node. It is also the part that keeps the list of close nodes up to date thanks to informations sent from the Vivaldi part. Finaly it will also provide the API to retrieve the closest node to the current one.
+The System part is both the orchestrator and the keeper of the close node list. It  parses the configuration file to handle initialisation of the node. It also keeps the list of close nodes up-to-date thanks to information received from the Vivaldi part. Finaly it also provides the API to retrieve the closest node to the current one.
 
-As for now :
+Currently:
 ### Close Nodes
 To maintain the close node list, here is what we do :
 
-Every time a the vivaldi algorythm computes the node's coordinates, it sends to the system the coordinates and an RPS table.
-* We update the existang distances in the close node coordinates
+Every time the vivaldi algorithm computes the node's coordinates, it sends the coordinates and an RPS table to the system .
+* We update the existing distances in the close node coordinates
 * We compute the distances of the RPS nodes.
-* We update the coordinates of the nodes in the close node list that also are in the RPS list. (We take the RPS list coordinates as the new ones)
+* We update the coordinates of the nodes in the close node list which are also in the RPS list. (We take the RPS list coordinates as the new ones)
 * We combine the RPS list and the close node list
 * We order them
-* We keep the n first elements (n is to define)
+* We keep the n first elements (n is user-defined)
 
 
 
@@ -32,26 +32,26 @@ To open the project in IntelliJ Idea for the first time, run `sbt gen-idea` in t
 
 To compile, `sbt compile`, to run `sbt run` and to test `sbt test`. Simple enough?
 
-Good practices
+Best Practices
 ================
 
 Version Control
 ------------------
 Each of us will work in branches. As soon as there is something to be reviewed, we shall use pull-requests to ask for code validation. It is better if there is not too much code to read, so make them regular but not too much either.
-Every 50-100 lines of code should be good.
+Commits should be sized around 50-100 lines of code (excluding comments).
 
 Package Control
 --------------------
-* The 'dto' package corresponds to all the messages types that will be exchanged between the actors.
-* The 'core' package corresponds to the Vivaldi Algorythm part.
-* The 'network' package corresponds to the Networking part.
-* The 'system' package corresponds to the System part
+* The 'dto' package contains  all the messages types that will be exchanged between the actors.
+* The 'core' package contains the Vivaldi Algorithm.
+* The 'network' package contains the Networking aspects.
+* The 'system' package contains the System part.
 
 If you need to modify 'dto' make a pull request.
 
 Logging
 -------
-We are using Akka logging system so that we can ealisy choose the output (File or Console). We use the console by default.
+We are using Akka's logging system so that we can easily choose the output (File or Console). We use the console by default.
 
 How to use :
 '''scala
@@ -68,4 +68,4 @@ Dependencies
 -----------
 These are defined in the 'build.sbt' file.
 
-If you shall change this file, make a pull request for it.
+If you change this file, make a pull request for it.
