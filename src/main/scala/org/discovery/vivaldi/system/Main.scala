@@ -94,24 +94,17 @@ class Main extends Actor{
     hypot(coordinates.x-externCoordinates.x,coordinates.y-externCoordinates.y)
   }
 
+
+
   def initSystem(){
 
   }
 
-
   val config = context.system.settings.config.getConfig("vivaldi.system.init")
 
-  val firstCallTime = config.getString(
-    "firstCallTime"
-  ).toInt
-
-  val timeBetweenCalls = config.getString(
-    "timeBetweenCalls"
-  ).toInt
-
-  val numberOfNodesCalled = config.getString(
-    "numberOfNodesCalled"
-  ).toInt
+  val firstCallTime = config.getInt("firstCallTime")
+  val timeBetweenCalls = config.getInt("timeBetweenCalls")
+  val numberOfNodesCalled = config.getInt("numberOfNodesCalled")
 
   /**
    *  First call made
