@@ -47,9 +47,15 @@ case class RPSInfo(node: ActorRef, systemInfo: SystemInfo, coordinates: Coordina
  * @param distanceFromSelf
  */
 case class CloseNodeInfo(node: ActorRef, systemInfo: SystemInfo, coordinates: Coordinates, distanceFromSelf: Double) extends nodeInfo with Ordered[CloseNodeInfo] {
-  def compare(that: CloseNodeInfo) = (this.distanceFromSelf - that.distanceFromSelf).signum
+  override def compare(that: CloseNodeInfo) = (this.distanceFromSelf - that.distanceFromSelf).signum
 
-  def equals(that: CloseNodeInfo) = this.node.path == that.node.path
+  override def equals(obj: Any) = obj match {
+    case that: CloseNodeInfo =>  this.node.path == that.node.path
+    case _ => false
+  }
+
+
+
 }
 
 /**
