@@ -32,6 +32,7 @@ import org.discovery.vivaldi.dto.UpdatedCoordinates
  class ComputingAlgorithm(system: ActorRef) extends Actor {
 
    val log = Logging(context.system, this)
+   var coordinates = Coordinates(0, 0)
 
    def receive = {
      case UpdatedRPS(rps) => compute(rps)
@@ -41,9 +42,8 @@ import org.discovery.vivaldi.dto.UpdatedCoordinates
    def compute(rps: Iterable[RPSInfo]) {
      log.debug(s"Received RPS $rps")
      //Vivaldi algorithm
-     var coordinates = Coordinates(1, 1)
      for (oneRps <- rps) {
-       coordinates.add(computeOne(coordinates, oneRps))
+       coordinates = coordinates.add(computeOne(oneRps))
      }
 
      log.debug(s"New coordinates computed: $coordinates")
@@ -51,7 +51,7 @@ import org.discovery.vivaldi.dto.UpdatedCoordinates
      system ! UpdatedCoordinates(coordinates, rps) //Envoi des coordonnées calculées à la brique Système
    }
 
-   def computeOne(coordinates: Coordinates, oneRps: RPSInfo): Coordinates = {
+   def computeOne(oneRps: RPSInfo): Coordinates = {
 
      val delta = 0.5
      //TODO see what value we assign to delta
