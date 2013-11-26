@@ -2,13 +2,12 @@ package org.discovery.vivaldi.core
 
 import akka.actor.{ActorRef, Actor}
 import akka.event.Logging
-import org.discovery.vivaldi.dto.{UpdatedCoordinates, Coordinates, RPSInfo, UpdatedRPS}
-import scala.collection.parallel.mutable.ParHashMap
 import scala.math._
 import org.discovery.vivaldi.dto.Coordinates
 import org.discovery.vivaldi.dto.UpdatedRPS
 import org.discovery.vivaldi.dto.RPSInfo
 import org.discovery.vivaldi.dto.UpdatedCoordinates
+import scala.util.Random
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -61,12 +60,23 @@ import org.discovery.vivaldi.dto.UpdatedCoordinates
      val diffY = coordinates.y - oneRps.coordinates.y
      val e = oneRps.ping - hypot(diffX, diffY)
      // Find the direction of the force the error is causing. (2)
-     val dir = Coordinates(math.abs(diffX)/diffX, math.abs(diffY)/diffY)
-     //TODO create a arbitrary vector if dir is null
+     val dir = findDir(diffX, diffY)
 
      // The force vector is proportional to the error (3)
      val f = dir.times(e.toDouble)
      // Move a a small step in the direction of the force. (4)
      f.times(delta.toDouble)
    }
+
+   def findDir(diffX: Double, diffY: Double): Coordinates = {
+     if (diffX == 0 && diffY == 0) {
+       val abs = new Random().nextDouble()
+       val ord = new Random().nextDouble()
+       val hyp = hypot(abs, ord)
+       Coordinates(abs/hyp, ord/hyp)
+     } else {
+       Coordinates(math.abs(diffX)/diffX, math.abs(diffY)/diffY)
+     }
+   }
+
 }
