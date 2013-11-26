@@ -3,6 +3,12 @@ package org.discovery.vivaldi.core
 import akka.actor.{ActorRef, Actor}
 import akka.event.Logging
 import org.discovery.vivaldi.dto.{UpdatedCoordinates, Coordinates, RPSInfo, UpdatedRPS}
+import scala.collection.parallel.mutable.ParHashMap
+import scala.math._
+import org.discovery.vivaldi.dto.Coordinates
+import org.discovery.vivaldi.dto.UpdatedRPS
+import org.discovery.vivaldi.dto.RPSInfo
+import org.discovery.vivaldi.dto.UpdatedCoordinates
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -35,10 +41,32 @@ import org.discovery.vivaldi.dto.{UpdatedCoordinates, Coordinates, RPSInfo, Upda
    def compute(rps: Iterable[RPSInfo]) {
      log.debug(s"Received RPS $rps")
      //Vivaldi algorithm
-     val coordinates = Coordinates(1, 1)
+     var coordinates = Coordinates(1, 1)
+     for (oneRps <- rps) {
+       coordinates.add(computeOne(coordinates, oneRps))
+     }
+
      log.debug(s"New coordinates computed: $coordinates")
      log.debug("Sending coordinates to the system actor")
      system ! UpdatedCoordinates(coordinates, rps) //Envoi des coordonnées calculées à la brique Système
    }
 
+   def computeOne(coordinates: Coordinates, oneRps: RPSInfo): Coordinates = {
+
+     val delta = 0.5
+     //TODO see what value we assign to delta
+
+     // Compute error of this sample. (1)
+     val diffX = coordinates.x - oneRps.coordinates.x
+     val diffY = coordinates.y - oneRps.coordinates.y
+     val e = oneRps.ping - hypot(diffX, diffY)
+     // Find the direction of the force the error is causing. (2)
+     val dir = Coordinates(math.abs(diffX)/diffX, math.abs(diffY)/diffY)
+     //TODO create a arbitrary vector if dir is null
+
+     // The force vector is proportional to the error (3)
+     val f = dir.times(e.toDouble)
+     // Move a a small step in the direction of the force. (4)
+     f.times(delta.toDouble)
+   }
 }
