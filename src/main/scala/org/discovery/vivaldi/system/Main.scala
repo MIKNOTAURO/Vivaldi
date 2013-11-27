@@ -27,7 +27,7 @@ import scala.util.Sorting.quickSort
  * limitations under the License.
  * ============================================================ */
 
-class Main extends Actor{
+class Main extends Actor {
 
   val log = Logging(context.system, this)
 

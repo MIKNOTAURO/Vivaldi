@@ -1,8 +1,8 @@
-package org.discovery.vivaldi
+package org.discovery.vivaldi.core
 
-import akka.event.slf4j.Logger
-import akka.actor.{Props, ActorSystem}
-import org.discovery.vivaldi.system.Main
+import akka.testkit.{TestKit, TestActorRef}
+import akka.actor.ActorSystem
+import org.scalatest.{MustMatchers, WordSpecLike}
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -23,18 +23,7 @@ import org.discovery.vivaldi.system.Main
  * limitations under the License.
  * ============================================================ */
 
-object Vivaldi {
+class ComputingAlgorithmSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with MustMatchers {
 
-  val log = Logger("Primary")
-
-  def main(args: Array[String]) = {
-
-
-    val akkaSystem = ActorSystem("Vivaldi")
-
-    val system = akkaSystem.actorOf(Props[Main], "System")
-
-    log.info("coucous")
-  }
 
 }

@@ -1,8 +1,6 @@
-package org.discovery.vivaldi
+package org.discovery.vivaldi.dto
 
-import akka.event.slf4j.Logger
-import akka.actor.{Props, ActorSystem}
-import org.discovery.vivaldi.system.Main
+import org.scalatest.{MustMatchers, WordSpecLike}
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -23,18 +21,14 @@ import org.discovery.vivaldi.system.Main
  * limitations under the License.
  * ============================================================ */
 
-object Vivaldi {
+class DTOSpec extends WordSpecLike with MustMatchers {
 
-  val log = Logger("Primary")
+  "CloseNodeInfo" must {
 
-  def main(args: Array[String]) = {
+    "have a working compare method" in {
 
+    }
 
-    val akkaSystem = ActorSystem("Vivaldi")
-
-    val system = akkaSystem.actorOf(Props[Main], "System")
-
-    log.info("coucous")
   }
 
 }

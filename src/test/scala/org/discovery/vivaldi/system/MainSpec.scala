@@ -1,8 +1,8 @@
-package org.discovery.vivaldi
+package org.discovery.vivaldi.system
 
-import akka.event.slf4j.Logger
-import akka.actor.{Props, ActorSystem}
-import org.discovery.vivaldi.system.Main
+import akka.testkit.{TestActorRef, TestKit}
+import akka.actor.ActorSystem
+import org.scalatest.{WordSpecLike, MustMatchers}
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -23,18 +23,19 @@ import org.discovery.vivaldi.system.Main
  * limitations under the License.
  * ============================================================ */
 
-object Vivaldi {
+class MainSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with MustMatchers {
 
-  val log = Logger("Primary")
+  "The main actor for API" must {
+    // Creation of the TestActorRef
+    val actorRef = TestActorRef[Main]
 
-  def main(args: Array[String]) = {
+    "receive messages " in {
+    }
 
+  }
 
-    val akkaSystem = ActorSystem("Vivaldi")
+  "The main actor for initialization" must {
 
-    val system = akkaSystem.actorOf(Props[Main], "System")
-
-    log.info("coucous")
   }
 
 }
