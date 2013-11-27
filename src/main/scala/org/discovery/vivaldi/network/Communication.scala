@@ -60,7 +60,7 @@ class Communication(vivaldiCore: ActorRef) extends Actor {
       myInfo=newInfo
       contactNodes(numberOfNodesToContact)
     }
-    case FirstContact(node) => rps =Seq(RPSInfo(node,null,null,9999999999))// I don't know the system information here
+    case FirstContact(node) => rps =Seq(RPSInfo(node,null,null,1000000))// I don't know the system information here
     case NewRPS(newRPS) => rps = newRPS
     case _ => {
       log.info("Unknown message")
