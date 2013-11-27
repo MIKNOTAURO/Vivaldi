@@ -26,7 +26,6 @@ import org.discovery.vivaldi.dto.{UpdatedCoordinates, Coordinates, RPSInfo, Upda
  class ComputingAlgorithm(system: ActorRef) extends Actor {
 
    val log = Logging(context.system, this)
-   val toto = 1
 
    def receive = {
      case UpdatedRPS(rps) => compute(rps)
