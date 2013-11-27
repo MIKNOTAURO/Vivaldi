@@ -2,9 +2,7 @@ package org.discovery.vivaldi
 
 import akka.event.slf4j.Logger
 import akka.actor.{Props, ActorSystem}
-import org.discovery.vivaldi.core.ComputingAlgorithm
 import org.discovery.vivaldi.system.Main
-import org.discovery.vivaldi.network.Communication
 
 /* ============================================================
  * Discovery Project - AkkaArc
