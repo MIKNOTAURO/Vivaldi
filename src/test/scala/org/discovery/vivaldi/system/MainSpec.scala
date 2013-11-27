@@ -1,8 +1,8 @@
-package org.discovery.vivaldi.core
+package org.discovery.vivaldi.system
 
-import akka.actor.{ActorRef, Actor}
-import akka.event.Logging
-import org.discovery.vivaldi.dto.{UpdatedCoordinates, Coordinates, RPSInfo, UpdatedRPS}
+import akka.testkit.{TestActorRef, TestKit}
+import akka.actor.ActorSystem
+import org.scalatest.{WordSpecLike, MustMatchers}
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -23,23 +23,19 @@ import org.discovery.vivaldi.dto.{UpdatedCoordinates, Coordinates, RPSInfo, Upda
  * limitations under the License.
  * ============================================================ */
 
- class ComputingAlgorithm(system: ActorRef) extends Actor {
+class MainSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with MustMatchers {
 
-   val log = Logging(context.system, this)
-   val toto = 1
+  "The main actor for API" must {
+    // Creation of the TestActorRef
+    val actorRef = TestActorRef[Main]
 
-   def receive = {
-     case UpdatedRPS(rps) => compute(rps)
-     case _ => log.info("Message Inconnu")
-   }
+    "receive messages " in {
+    }
 
-   def compute(rps: Iterable[RPSInfo]) {
-     log.debug(s"Received RPS $rps")
-     //Vivaldi algorithm
-     val coordinates = Coordinates(1, 1)
-     log.debug(s"New coordinates computed: $coordinates")
-     log.debug("Sending coordinates to the system actor")
-     system ! UpdatedCoordinates(coordinates, rps) //Envoi des coordonnées calculées à la brique Système
-   }
+  }
+
+  "The main actor for initialization" must {
+
+  }
 
 }

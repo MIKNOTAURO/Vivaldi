@@ -1,8 +1,6 @@
-package org.discovery.vivaldi.core
+package org.discovery.vivaldi.dto
 
-import akka.actor.{ActorRef, Actor}
-import akka.event.Logging
-import org.discovery.vivaldi.dto.{UpdatedCoordinates, Coordinates, RPSInfo, UpdatedRPS}
+import org.scalatest.{MustMatchers, WordSpecLike}
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -23,23 +21,14 @@ import org.discovery.vivaldi.dto.{UpdatedCoordinates, Coordinates, RPSInfo, Upda
  * limitations under the License.
  * ============================================================ */
 
- class ComputingAlgorithm(system: ActorRef) extends Actor {
+class DTOSpec extends WordSpecLike with MustMatchers {
 
-   val log = Logging(context.system, this)
-   val toto = 1
+  "CloseNodeInfo" must {
 
-   def receive = {
-     case UpdatedRPS(rps) => compute(rps)
-     case _ => log.info("Message Inconnu")
-   }
+    "have a working compare method" in {
 
-   def compute(rps: Iterable[RPSInfo]) {
-     log.debug(s"Received RPS $rps")
-     //Vivaldi algorithm
-     val coordinates = Coordinates(1, 1)
-     log.debug(s"New coordinates computed: $coordinates")
-     log.debug("Sending coordinates to the system actor")
-     system ! UpdatedCoordinates(coordinates, rps) //Envoi des coordonnées calculées à la brique Système
-   }
+    }
+
+  }
 
 }
