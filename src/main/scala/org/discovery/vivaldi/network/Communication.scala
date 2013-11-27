@@ -6,8 +6,6 @@ import org.discovery.vivaldi.dto.{FirstContact, UpdatedRPS, RPSInfo, DoRPSReques
 import scala.concurrent.Future
 import akka.pattern.ask
 import org.discovery.vivaldi.network.Communication.{NewRPS, Pong, Ping}
-import scala.collection.convert.Wrappers.MutableSetWrapper
-import java.util.Collections
 import scala.collection.mutable
 import scala.util.{Success, Random}
 import akka.util.Timeout
