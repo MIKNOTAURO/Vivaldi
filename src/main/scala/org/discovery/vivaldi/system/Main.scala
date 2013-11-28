@@ -1,12 +1,19 @@
 package org.discovery.vivaldi.system
 
 import akka.event.Logging
-import akka.actor.{Props, ActorSystem, Actor}
+import akka.actor.{Props, Actor}
 import org.discovery.vivaldi.core.ComputingAlgorithm
-import org.discovery.vivaldi.dto.{CloseNodeInfo, RPSInfo, Coordinates, UpdatedCoordinates}
+import scala.concurrent.duration._
+import org.discovery.vivaldi.dto._
 import org.discovery.vivaldi.network.Communication
 import scala.math._
-import scala.util.Sorting.quickSort
+import scala.concurrent.ExecutionContext
+import ExecutionContext.Implicits.global
+import org.discovery.vivaldi.dto.Coordinates
+import org.discovery.vivaldi.dto.DoRPSRequest
+import org.discovery.vivaldi.dto.CloseNodeInfo
+import org.discovery.vivaldi.dto.RPSInfo
+import org.discovery.vivaldi.dto.UpdatedCoordinates
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -91,8 +98,52 @@ class Main extends Actor {
     hypot(coordinates.x-externCoordinates.x,coordinates.y-externCoordinates.y)
   }
 
+
+
   def initSystem(){
 
+  }
+
+  case class CountCalls();
+
+  val config = context.system.settings.config.getConfig("vivaldi.system.init")
+
+  val firstCallTime = config.getInt("firstCallTime")
+  val timeBetweenCallsFirst = config.getInt("timeBetweenCallsFirst")
+  val timeBetweenCallsThen = config.getInt("timeBetweenCallsThen")
+  val numberOfNodesCalled = config.getInt("numberOfNodesCalled")
+  val changeTime =  config.getInt("changeTime")
+
+  var numberOfCalls = 0
+
+  /**
+   *  First call made
+  Used to init the system with a first node
+   */
+  val initScheduler = context.system.scheduler.scheduleOnce(firstCallTime seconds){
+     network ! FirstContact(null)
+  }
+
+  /**
+   *  Creates a scheduler
+  Calls network with case class DoRPSRequest in argument
+  First call will be made after firstCallTime ms
+  Calls made each timeBetweenCalls ms
+   */
+  val schedulerRPSFirst = context.system.scheduler.schedule(timeBetweenCallsFirst seconds, timeBetweenCallsFirst seconds){
+    log.debug("Scheduler for RPS request called")
+    log.debug(s"$numberOfNodesCalled nodes will be called")
+    network ! DoRPSRequest(numberOfNodesCalled)
+  }
+
+  val schedulerChangeFrequency = context.system.scheduler.scheduleOnce(changeTime seconds){
+    schedulerRPSFirst.cancel()
+  }
+
+  val schedulerRPSThen = context.system.scheduler.schedule(changeTime seconds, timeBetweenCallsThen seconds){
+    log.debug("Scheduler for RPS request called")
+    log.debug(s"$numberOfNodesCalled nodes will be called")
+    network ! DoRPSRequest(numberOfNodesCalled)
   }
 
 }
