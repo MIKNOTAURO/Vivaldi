@@ -2,7 +2,7 @@ package org.discovery.vivaldi.network
 
 import akka.actor.{ActorRef, Actor}
 import akka.event.Logging
-import org.discovery.vivaldi.dto.{FirstContact, UpdatedRPS, RPSInfo, DoRPSRequest}
+import org.discovery.vivaldi.dto._
 import scala.concurrent.Future
 import akka.pattern.ask
 import org.discovery.vivaldi.network.Communication.{NewRPS, Pong, Ping}
@@ -11,6 +11,14 @@ import scala.util.{Success, Random}
 import akka.util.Timeout
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
+import org.discovery.vivaldi.network.Communication.Ping
+import org.discovery.vivaldi.dto.DoRPSRequest
+import org.discovery.vivaldi.network.Communication.Pong
+import org.discovery.vivaldi.network.Communication.NewRPS
+import scala.util.Success
+import org.discovery.vivaldi.dto.FirstContact
+import org.discovery.vivaldi.dto.UpdatedRPS
+import org.discovery.vivaldi.dto.RPSInfo
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -49,13 +57,15 @@ class Communication(vivaldiCore: ActorRef) extends Actor {
   //used when getting rps info
   implicit val pingTimeout = Timeout(5 seconds)
 
-  var myInfo:RPSInfo= null
+  //TODO set systemInfo
+  var myInfo:RPSInfo= RPSInfo(self,null,Coordinates(0,0),0)//the ping in myInfo isn't used
+
 
   def receive = {
 
     case Ping(sendTime) =>  sender ! Pong(sendTime,myInfo,rps)  // it's the reply to someone so you don't have to treat it
     case DoRPSRequest(newInfo:RPSInfo,numberOfNodesToContact) => {
-      myInfo=newInfo
+      myInfo=newInfo  // we use RPSInfo to propagate new systemInfo and coordinates
       contactNodes(numberOfNodesToContact)
     }
     case FirstContact(node) => rps =Seq(RPSInfo(node,null,null,1000000))// I don't know the system information here
@@ -80,7 +90,7 @@ class Communication(vivaldiCore: ActorRef) extends Actor {
     val returnRPS=mutable.Set[RPSInfo]()
     // we need to synchronize this huge block to make this thread-safe
     this.synchronized { //there's surely a more functional way to do this
-      rps= Random.shuffle(Seq(myInfo)++rps)
+      rps= Random.shuffle(Seq(myInfo)++rps) //there might be duplicates
       val thisSz = rps.size+1
       val otherSz= other.size
       val newSize= (thisSz+otherSz)/2
@@ -135,10 +145,11 @@ class Communication(vivaldiCore: ActorRef) extends Actor {
         result <- ask
         if result != null //the askPing method returns null when there's a contact failure, so we filter it out
         Success(Pong(sendTime,selfInfo,otherRPS)) = result //if it doesn't fail it returns a Pong
+        if selfInfo != null //make sure there is contact information at least
       } yield {
         val pingTime = System.currentTimeMillis()-sendTime
         val newSenderRPS = this.mixRPS(otherRPS)
-        sender ! NewRPS(newSenderRPS)
+        selfInfo.node ! NewRPS(newSenderRPS)  //send info back to guy
         selfInfo.copy(ping = pingTime)//we give the same info, but update the diff
       }
     }
@@ -149,7 +160,7 @@ class Communication(vivaldiCore: ActorRef) extends Actor {
       case scala.util.Success(newInfos:Iterable[RPSInfo]) => {
         log.debug("RPS request completed")
         log.debug("Sending new RPS to vivaldi core")
-        vivaldiCore ! UpdatedRPS(newInfos.filter((selfInfo:RPSInfo) => selfInfo!=null)) //only send RPSInfo with good info
+        vivaldiCore ! UpdatedRPS(newInfos)
       }
       case _ => {
         //this should never run, since asks always succeed in theory
