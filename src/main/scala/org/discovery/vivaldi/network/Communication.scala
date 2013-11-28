@@ -144,7 +144,7 @@ class Communication(vivaldiCore: ActorRef) extends Actor {
     }
 
 
-    val allAsks = Future.sequence(asks)
+    val allAsks = Future.sequence(contactedNodes)
     allAsks onComplete {
       case scala.util.Success(newInfos:Iterable[RPSInfo]) => {
         log.debug("RPS request completed")
