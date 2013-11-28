@@ -16,6 +16,8 @@ libraryDependencies += "org.scalatest" % "scalatest_2.10" % "2.0" % "test"
 
 libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.0.13"
 
+libraryDependencies += "com.typesafe.akka" %% "akka-remote" % "2.3-SNAPSHOT"
+
 lazy val logback = "ch.qos.logback" % "logback-classic" % "1.0.13"
 
 
