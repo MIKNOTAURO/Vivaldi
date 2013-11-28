@@ -5,9 +5,8 @@ import akka.event.Logging
 import org.discovery.vivaldi.dto._
 import scala.concurrent.Future
 import akka.pattern.ask
-import org.discovery.vivaldi.network.Communication.{NewRPS, Pong, Ping}
 import scala.collection.mutable
-import scala.util.{Success, Random}
+import scala.util.Random
 import akka.util.Timeout
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
