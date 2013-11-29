@@ -41,7 +41,7 @@ import org.discovery.vivaldi.dto.RPSInfo
 
 object Communication{
   // Ping/Pong are used in the RPS update process, to measure ping and recover new RPSs
-  case class Ping(sendTime:Long)
+  case class Ping(sendTime:Long, selfInfo: RPSInfo)
   case class Pong(sendTime:Long,selfInfo:RPSInfo,rps:Iterable[RPSInfo])
   //NewRPS is used to update the RPS (in the "mix RPS" phase)
   case class NewRPS(rps:Iterable[RPSInfo])
@@ -53,6 +53,8 @@ class Communication(vivaldiCore: ActorRef) extends Actor {
 
   var rps: Iterable[RPSInfo] = Seq[RPSInfo]()
 
+  val rpsSize = 100 //TODO choose a number
+
   //used when getting rps info
   implicit val pingTimeout = Timeout(5 seconds)
 
@@ -62,7 +64,7 @@ class Communication(vivaldiCore: ActorRef) extends Actor {
 
   def receive = {
 
-    case Ping(sendTime) =>  sender ! Pong(sendTime,myInfo,rps)  // it's the reply to someone so you don't have to treat it
+    case ping: Ping => receivePing(ping)
     case DoRPSRequest(newInfo:RPSInfo,numberOfNodesToContact) => {
       myInfo=newInfo  // we use RPSInfo to propagate new systemInfo and coordinates
       contactNodes(numberOfNodesToContact)
@@ -74,96 +76,56 @@ class Communication(vivaldiCore: ActorRef) extends Actor {
     }
   }
 
-  /**
-   * Shuffles our RPS with another RPS
-   * modifies rps
-   * @param other the other RPS to mix with
-   * @return  the new RPS to give to the owner of the 'other' RPS
-   */
-  //TODO make this better
-  def mixRPS(other:Iterable[RPSInfo]):Iterable[RPSInfo]={
-    /**
-     * This function takes 2 RPS lists r1 and r2 , of size n and m, and mixes together
-     * this makes two new RPS lists (r1' and r2') of sizes floor((n+m)/2) and cieling((n+m)/2)
-     */
-    val returnRPS=mutable.Set[RPSInfo]()
-    // we need to synchronize this huge block to make this thread-safe
-    this.synchronized { //there's surely a more functional way to do this
-      rps= Random.shuffle(Seq(myInfo)++rps) //there might be duplicates
-      val thisSz = rps.size+1
-      val otherSz= other.size
-      val newSize= (thisSz+otherSz)/2
-      val newRPS = mutable.Set[RPSInfo]()
-      val thisIter = rps.iterator
-      val otherIter= other.iterator
-      for(i <- 0 until newSize){//we draw floor(n+m)/2 elements
-        if(Math.random()<0.5){ //with equal probability
-          if(thisIter.hasNext)
-            newRPS.add(thisIter.next()) //fetch from r1
-          else
-            newRPS.add(otherIter.next())//(unless there're no more elements in r1)
-        }else{
-          if(otherIter.hasNext)
-            newRPS.add(otherIter.next()) //or fetch from r2
-          else
-            newRPS.add(thisIter.next())
-        }
-      }
-      rps=newRPS //udate r1
-      //then put the rest of the elements into r2
-      while(thisIter.hasNext){
-        returnRPS.add(thisIter.next())
-      }
-      while(otherIter.hasNext){
-        returnRPS.add(otherIter.next())
-      }
-    }
-    returnRPS
+  def receivePing(ping: Ping) {
+    sender ! Pong(ping.sendTime, myInfo, rps)
+    rps = Random.shuffle(ping.selfInfo +: rps.tail.toSeq) //replacing the first element of the rps by the pinger and shuffling all that
   }
 
-
-
-  def askPing(info:RPSInfo):Future[Any]= {
-    //we ask, if it fails (like in a Timeout, notably), we instead return null
-    ask(info.node,Ping(System.currentTimeMillis()))(10 seconds) fallbackTo Future(null)
+  def mixRPS(rpsList: Iterable[Pong]): Iterable[RPSInfo] = {
+    Random.shuffle(rpsList.flatMap(_.rps)).take(rpsSize)
   }
 
   def contactNodes(numberOfNodesToContact: Int) {
     log.debug(s"Order to contact $numberOfNodesToContact received")
-    //seeing how the rps is shuffled on every update, no need to shuffle again
-    val toContact:Iterable[RPSInfo]=rps.take(numberOfNodesToContact)
+    val toContact = rps.take(numberOfNodesToContact)
+    val asks= toContact map askPing
 
-    //list of contacts we'll need to make to update the RPS
-    val asks = toContact.map(askPing)
-
-    //this is the callback to execute when recieving an answer from an RPS request
-    val contactedNodes:Iterable[Future[RPSInfo]] = for{//this is an Iterable for-expression
-      ask <- asks
-    } yield {
-      for{//this is a Future for-comprehension, we can't mix with the previous one
+    val updatedAsks: Iterable[Future[Pong]] = asks.map { ask =>
+      for {
         result <- ask
-        if result != null //the askPing method returns null when there's a contact failure, so we filter it out
-        Success(Pong(sendTime,selfInfo,otherRPS)) = result //if it doesn't fail it returns a Pong
-        if selfInfo != null //make sure there is contact information at least
+        if result != null
+        Pong(sendTime,selfInfo,otherRPS) = result
+        if selfInfo != null
       } yield {
         val pingTime = System.currentTimeMillis()-sendTime
-        val newSenderRPS = this.mixRPS(otherRPS)
-        selfInfo.node ! NewRPS(newSenderRPS)  //send info back to guy
-        selfInfo.copy(ping = pingTime)//we give the same info, but update the diff
+        val newSelfInfo = selfInfo.copy(ping = pingTime)
+        result.copy(selfInfo = newSelfInfo)
       }
     }
 
+    val allAsks = Future sequence updatedAsks
 
-    val allAsks = Future.sequence(contactedNodes)
     allAsks onComplete {
-      case scala.util.Success(newInfos:Iterable[RPSInfo]) => {
-        log.debug("RPS request completed")
-        log.debug("Sending new RPS to vivaldi core")
-        vivaldiCore ! UpdatedRPS(newInfos)
+      case Success(newInfos: Iterable[Pong]) => {
+        val newRPS = newInfos.map(_.selfInfo)
+        vivaldiCore ! UpdatedRPS(newRPS)
+        rps = mixRPS(newInfos)
       }
-      case _ => {
-        //this should never run, since asks always succeed in theory
-        log.error("RPS request failed! Code logic error")
+      case _ => log.error("RPS request failed!")
+    }
+  }
+
+
+  def askPing(info:RPSInfo): Future[Pong]= {
+    //we ask, if it fails (like in a Timeout, notably), we instead return null
+    val future = ask(info.node,Ping(System.currentTimeMillis(), myInfo))(10 seconds) fallbackTo Future(null)
+    future.map{result =>
+      if (result.isInstanceOf[Pong]) {
+        result.asInstanceOf[Pong]
+      }
+      else {
+        log.error("Can't figure out response type")
+        null
       }
     }
   }
