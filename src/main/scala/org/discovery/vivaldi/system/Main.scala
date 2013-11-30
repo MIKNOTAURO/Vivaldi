@@ -45,13 +45,37 @@ class Main extends Actor {
   var coordinates: Coordinates = Coordinates(0,0)
   var closeNodes: Seq[CloseNodeInfo] = Seq()
 
+  val config = context.system.settings.config.getConfig("vivaldi.system.init")
+  val numberOfCloseNodes = config.getInt("numberOfNodeCloseNodes")
+
   /**
    * Method that handles the oncoming messages
    * @return
    */
   def receive = {
+    case nextNode(origin, excluded) => getCloseNodes(origin, excluded, 1)
+    case nextNodes(origin, excluded, numberOfNodes) => getCloseNodes(origin, excluded, numberOfNodes)
     case UpdatedCoordinates(newCoordinates, rps) => updateCoordinates(newCoordinates, rps)
     case _ => log.info("Message Inconnu")
+  }
+
+  /**
+   * Method that retrieves the closest nodes from the origin
+   * @param origin reference node if null, current node will be used as a reference
+   * @param excluded excluded nodes from the result
+   * @param numberOfNodes number of nodes to return
+   * @return a Sequence of the closest nodes
+   */
+  def getCloseNodes(origin: nodeInfo, excluded: Set[nodeInfo], numberOfNodes: Int): Seq[nodeInfo] = {
+    if (origin.node.path == this.network.path || origin == null){
+      // If we take as a reference the current node, we only have to retrieve the n first elements of the list without the excluded nodes
+      closeNodes.filterNot(excluded contains).take(numberOfNodes)
+    } else {
+      // Else we just have to compute the distances between the reference and the nodes in memory, sort them, and send the n closest without excluded nodes
+      val relativeDistancesSeq = closeNodes.map(node => node.copy(distanceFromSelf = computeDistanceBtw(origin.coordinates,this.coordinates)))
+      relativeDistancesSeq.sorted
+      relativeDistancesSeq.filterNot(excluded contains).take(numberOfNodes)
+    }
   }
 
   /**
@@ -86,7 +110,7 @@ class Main extends Actor {
 
     log.debug("Ordering closest node List")
     closeNodes.sorted
-    //TODO Troncate the list to only keep the n first element. We first have to define the configuration part
+    closeNodes = closeNodes.take(numberOfCloseNodes)
   }
 
   /**
@@ -95,18 +119,24 @@ class Main extends Actor {
    * @return
    */
   def computeDistanceToSelf(externCoordinates: Coordinates): Double = {
-    hypot(coordinates.x-externCoordinates.x,coordinates.y-externCoordinates.y)
+    computeDistanceBtw(coordinates,externCoordinates)
   }
 
-
+  /**
+   * Compute the distance between two coordinates
+   * @param a coordinates of the point a
+   * @param b coordinates of the point b
+   * @return distance between the two points
+   */
+  def computeDistanceBtw(a: Coordinates, b: Coordinates): Double = {
+    hypot(a.x-b.x,a.y-b.y)
+  }
 
   def initSystem(){
 
   }
 
   case class CountCalls();
-
-  val config = context.system.settings.config.getConfig("vivaldi.system.init")
 
   val firstCallTime = config.getInt("firstCallTime")
   val timeBetweenCallsFirst = config.getInt("timeBetweenCallsFirst")

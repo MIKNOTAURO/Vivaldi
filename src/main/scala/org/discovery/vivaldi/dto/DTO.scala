@@ -53,9 +53,6 @@ case class CloseNodeInfo(node: ActorRef, systemInfo: SystemInfo, coordinates: Co
     case that: CloseNodeInfo =>  this.node.path == that.node.path
     case _ => false
   }
-
-
-
 }
 
 /**
@@ -67,7 +64,6 @@ case class SystemInfo(cores: Int, memory: Long)
 
 case class Coordinates(x: Long, y: Long)
 
-
 case class DoRPSRequest(numberOfNodesToContact: Int) // System-Network Message
 
 case class FirstContact(node: ActorRef) //System-Network Message
@@ -75,3 +71,19 @@ case class FirstContact(node: ActorRef) //System-Network Message
 case class UpdatedRPS(rps: Iterable[RPSInfo]) // Network-Vivaldi Message
 
 case class UpdatedCoordinates(coordinates: Coordinates, RPSTable: Iterable[RPSInfo])  // Vivaldi-System Message
+
+// API Messages
+/**
+ * Message to get the next closest Node to origin
+ * @param origin node from which you want the closest node from
+ * @param excluded nodes to exclude from the result
+ */
+case class nextNode(origin: nodeInfo, excluded: Set[nodeInfo])
+
+/**
+ * Message to get the next closest Nodes to origin
+ * @param origin node from which you want the closest node from
+ * @param excluded nodes to exclude from the result
+ * @param numberOfNodes number of nodes to return
+ */
+case class nextNodes(origin: nodeInfo, excluded: Set[nodeInfo], numberOfNodes: Int)
