@@ -53,29 +53,34 @@ class Main extends Actor {
    * @return
    */
   def receive = {
-    case nextNode(origin, excluded) => getCloseNodes(origin, excluded, 1)
-    case nextNodes(origin, excluded, numberOfNodes) => getCloseNodes(origin, excluded, numberOfNodes)
+    case NextNodesToSelf(excluded, numberOfNodes) => getCloseNodesToSelf(excluded, numberOfNodes)
+    case NextNodesFrom(origin, excluded, numberOfNodes) => getCloseNodesFrom(origin, excluded, numberOfNodes)
     case UpdatedCoordinates(newCoordinates, rps) => updateCoordinates(newCoordinates, rps)
-    case _ => log.info("Message Inconnu")
+    case _ => log.info("Unkown Message")
+  }
+
+  /**
+   * Method that retrieves the closest nodes from self
+   * @param excluded excluded nodes from the result by default nothing is excluded
+   * @param numberOfNodes number of nodes to return by default we return one node
+   * @return a Sequence of the closest nodes
+   */
+  def getCloseNodesToSelf(excluded: Set[nodeInfo] = Set(), numberOfNodes: Int = 1): Seq[nodeInfo] = {
+    // we take as a reference the current node, we only have to retrieve the n first elements of the list without the excluded nodes
+    closeNodes.filterNot(excluded contains).take(numberOfNodes)
   }
 
   /**
    * Method that retrieves the closest nodes from the origin
-   * @param origin reference node if null, current node will be used as a reference
-   * @param excluded excluded nodes from the result
-   * @param numberOfNodes number of nodes to return
+   * @param origin reference node
+   * @param excluded excluded nodes from the result. By default nothing is excluded
+   * @param numberOfNodes number of nodes to return. By default we return one node
    * @return a Sequence of the closest nodes
    */
-  def getCloseNodes(origin: nodeInfo, excluded: Set[nodeInfo], numberOfNodes: Int): Seq[nodeInfo] = {
-    if (origin.node.path == this.network.path || origin == null){
-      // If we take as a reference the current node, we only have to retrieve the n first elements of the list without the excluded nodes
-      closeNodes.filterNot(excluded contains).take(numberOfNodes)
-    } else {
-      // Else we just have to compute the distances between the reference and the nodes in memory, sort them, and send the n closest without excluded nodes
+  def getCloseNodesFrom(origin: nodeInfo, excluded: Set[nodeInfo] = Set(), numberOfNodes: Int = 1): Seq[nodeInfo] = {
+      // we just have to compute the distances between the reference and the nodes in memory, sort them, and send the n closest without excluded nodes
       val relativeDistancesSeq = closeNodes.map(node => node.copy(distanceFromSelf = computeDistanceBtw(origin.coordinates,this.coordinates)))
-      relativeDistancesSeq.sorted
-      relativeDistancesSeq.filterNot(excluded contains).take(numberOfNodes)
-    }
+      relativeDistancesSeq.sorted.filterNot(excluded contains).take(numberOfNodes)
   }
 
   /**
@@ -109,8 +114,7 @@ class Main extends Actor {
     closeNodes = RPSCloseNodesToAdd ++ closeNodes
 
     log.debug("Ordering closest node List")
-    closeNodes.sorted
-    closeNodes = closeNodes.take(numberOfCloseNodes)
+    closeNodes = closeNodes.sorted.take(numberOfCloseNodes)
   }
 
   /**
