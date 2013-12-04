@@ -78,7 +78,7 @@ case class UpdatedCoordinates(coordinates: Coordinates, RPSTable: Iterable[RPSIn
  * @param excluded nodes to exclude from the result. By default it is empty.
  * @param numberOfNodes number of nodes to return. 1 by default.
  */
-case class NextNodesToSelf(excluded: Set[nodeInfo], numberOfNodes: Int)
+case class NextNodesToSelf(excluded: Set[nodeInfo] = Set(), numberOfNodes: Int = 1)
 
 /**
  * Message to get the next closest Nodes to origin
@@ -86,4 +86,4 @@ case class NextNodesToSelf(excluded: Set[nodeInfo], numberOfNodes: Int)
  * @param excluded nodes to exclude from the result. By default it is empty.
  * @param numberOfNodes number of nodes to return. 1 by default.
  */
-case class NextNodesFrom(origin: nodeInfo, excluded: Set[nodeInfo], numberOfNodes: Int)
+case class NextNodesFrom(origin: nodeInfo, excluded: Set[nodeInfo] = Set(), numberOfNodes: Int = 1)
