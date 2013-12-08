@@ -151,6 +151,8 @@ class Main extends Actor {
 
   var numberOfCalls = 0
 
+  val myInfo = RPSInfo(null, null, coordinates, 0) // TODO Fix that
+
   /**
    *  First call made
   Used to init the system with a first node
@@ -168,7 +170,7 @@ class Main extends Actor {
   val schedulerRPSFirst = context.system.scheduler.schedule(timeBetweenCallsFirst seconds, timeBetweenCallsFirst seconds){
     log.debug("Scheduler for RPS request called")
     log.debug(s"$numberOfNodesCalled nodes will be called")
-    network ! DoRPSRequest(numberOfNodesCalled)
+    network ! DoRPSRequest(myInfo, numberOfNodesCalled)
   }
 
   val schedulerChangeFrequency = context.system.scheduler.scheduleOnce(changeTime seconds){
@@ -178,7 +180,7 @@ class Main extends Actor {
   val schedulerRPSThen = context.system.scheduler.schedule(changeTime seconds, timeBetweenCallsThen seconds){
     log.debug("Scheduler for RPS request called")
     log.debug(s"$numberOfNodesCalled nodes will be called")
-    network ! DoRPSRequest(numberOfNodesCalled)
+    network ! DoRPSRequest(myInfo, numberOfNodesCalled)
   }
 
 }

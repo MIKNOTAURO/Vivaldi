@@ -27,7 +27,7 @@ class MainSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with
 
   "The main actor for API" must {
     // Creation of the TestActorRef
-    val actorRef = TestActorRef[Main]
+    //val actorRef = TestActorRef[Main]
 
     "receive messages " in {
     }
