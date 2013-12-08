@@ -1,4 +1,4 @@
-VivaldiGSI project
+VivaldiGSI project [![Build Status](https://travis-ci.org/BeyondTheClouds/VivaldiGSI.png?branch=master)](https://travis-ci.org/BeyondTheClouds/VivaldiGSI)
 ===========================
 
 This project is an implementation of the Vivaldi algorithm.
