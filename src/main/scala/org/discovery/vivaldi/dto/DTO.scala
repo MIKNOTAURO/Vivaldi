@@ -72,7 +72,7 @@ case class Coordinates(x: Double, y: Double) {
   }
 }
 
-case class DoRPSRequest(numberOfNodesToContact: Int) // System-Network Message
+case class DoRPSRequest(newInfo:RPSInfo,numberOfNodesToContact: Int) // System-Network Message
 
 case class FirstContact(node: ActorRef) //System-Network Message
 
