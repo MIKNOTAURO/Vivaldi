@@ -70,6 +70,11 @@ case class Coordinates(x: Double, y: Double) {
   def add(that: Coordinates): Coordinates = {
     Coordinates(this.x + that.x, this.y + that.y)
   }
+
+  override def equals(obj: Any) = obj match {
+    case that: Coordinates =>  this.x == that.x && this.y == that.y
+    case _ => false
+  }
 }
 
 case class DoRPSRequest(newInfo:RPSInfo,numberOfNodesToContact: Int) // System-Network Message
