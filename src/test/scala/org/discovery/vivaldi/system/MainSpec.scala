@@ -52,9 +52,9 @@ class MainSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with
     val closeNodesToBe = Seq(closeNodeOne,closeNodeTwo,closeNodeThree)
 
     "Compute the distance between two points" in {
-      val a = Coordinates(0,0)
-      val b = Coordinates(2,0)
-      assertResult(2){
+      val a = Coordinates(1,1)
+      val b = Coordinates(2,2)
+      assertResult(sqrt(2)){
         testMainActor.underlyingActor.computeDistanceBtw(a,b)
       }
     }
