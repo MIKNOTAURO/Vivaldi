@@ -62,7 +62,15 @@ case class CloseNodeInfo(node: ActorRef, systemInfo: SystemInfo, coordinates: Co
  */
 case class SystemInfo(cores: Int, memory: Long)
 
-case class Coordinates(x: Long, y: Long)
+case class Coordinates(x: Double, y: Double) {
+  def times(multiplier: Double): Coordinates =  {
+    Coordinates(this.x * multiplier, this.y * multiplier)
+  }
+
+  def add(that: Coordinates): Coordinates = {
+    Coordinates(this.x + that.x, this.y + that.y)
+  }
+}
 
 case class DoRPSRequest(numberOfNodesToContact: Int) // System-Network Message
 
