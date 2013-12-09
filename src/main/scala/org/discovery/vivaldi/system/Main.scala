@@ -57,7 +57,7 @@ class Main extends Actor {
     case NextNodesToSelf(excluded, numberOfNodes) => getCloseNodesToSelf(excluded, numberOfNodes)
     case NextNodesFrom(origin, excluded, numberOfNodes) => getCloseNodesFrom(origin, excluded, numberOfNodes)
     case UpdatedCoordinates(newCoordinates, rps) => updateCoordinates(newCoordinates, rps)
-    case _ => log.info("Unkown Message")
+    case _ => log.info("Unknown Message")
   }
 
   /**
@@ -141,15 +141,11 @@ class Main extends Actor {
 
   }
 
-  case class CountCalls();
-
   val firstCallTime = configInit.getInt("firstCallTime")
   val timeBetweenCallsFirst = configInit.getInt("timeBetweenCallsFirst")
   val timeBetweenCallsThen = configInit.getInt("timeBetweenCallsThen")
   val numberOfNodesCalled = configInit.getInt("numberOfNodesCalled")
   val changeTime =  configInit.getInt("changeTime")
-
-  var numberOfCalls = 0
 
   val myInfo = RPSInfo(null, null, coordinates, 0) // TODO Fix that
 
