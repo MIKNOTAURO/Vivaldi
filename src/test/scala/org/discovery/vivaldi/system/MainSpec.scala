@@ -59,10 +59,6 @@ class MainSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with
       }
     }
 
-    "bla" in {
-      mainActor.underlyingActor.
-    }
-
   }
 
 }
