@@ -1,4 +1,4 @@
-VivaldiGSI project
+VivaldiGSI project [![Build Status](https://travis-ci.org/BeyondTheClouds/VivaldiGSI.png?branch=master)](https://travis-ci.org/BeyondTheClouds/VivaldiGSI)
 ===========================
 
 This project is an implementation of the Vivaldi algorithm.
@@ -11,6 +11,30 @@ System
 The System part is both the orchestrator and the keeper of the close node list. It  parses the configuration file to handle initialisation of the node. It also keeps the list of close nodes up-to-date thanks to information received from the Vivaldi part. Finaly it also provides the API to retrieve the closest node to the current one.
 
 Currently:
+### API
+As for now the API is accessible by sending messages to the system.
+Here are the different messages available :
+
+```scala
+// API Messages
+/**
+ * Message to get the next closest Nodes to self
+ * @param excluded nodes to exclude from the result. By default it is empty.
+ * @param numberOfNodes number of nodes to return. 1 by default.
+ */
+case class NextNodesToSelf(excluded: Set[nodeInfo] = Set(), numberOfNodes: Int = 1)
+
+/**
+ * Message to get the next closest Nodes to origin
+ * @param origin node from which you want the closest node from
+ * @param excluded nodes to exclude from the result. By default it is empty.
+ * @param numberOfNodes number of nodes to return. 1 by default.
+ */
+case class NextNodesFrom(origin: nodeInfo, excluded: Set[nodeInfo] = Set(), numberOfNodes: Int = 1)
+```
+
+What is returned is a `Seq[nodeInfo]`
+
 ### Close Nodes
 To maintain the close node list, here is what we do :
 

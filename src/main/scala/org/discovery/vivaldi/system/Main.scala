@@ -1,12 +1,19 @@
 package org.discovery.vivaldi.system
 
 import akka.event.Logging
-import akka.actor.{Props, ActorSystem, Actor}
+import akka.actor.{Props, Actor}
 import org.discovery.vivaldi.core.ComputingAlgorithm
-import org.discovery.vivaldi.dto.{CloseNodeInfo, RPSInfo, Coordinates, UpdatedCoordinates}
+import scala.concurrent.duration._
+import org.discovery.vivaldi.dto._
 import org.discovery.vivaldi.network.Communication
 import scala.math._
-import scala.util.Sorting.quickSort
+import scala.concurrent.ExecutionContext
+import ExecutionContext.Implicits.global
+import org.discovery.vivaldi.dto.Coordinates
+import org.discovery.vivaldi.dto.DoRPSRequest
+import org.discovery.vivaldi.dto.CloseNodeInfo
+import org.discovery.vivaldi.dto.RPSInfo
+import org.discovery.vivaldi.dto.UpdatedCoordinates
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -38,13 +45,43 @@ class Main extends Actor {
   var coordinates: Coordinates = Coordinates(0,0)
   var closeNodes: Seq[CloseNodeInfo] = Seq()
 
+  val config = context.system.settings.config.getConfig("vivaldi.system")
+  val configInit = config.getConfig("init")
+  val numberOfCloseNodes = config.getInt("closeNodes.size")
+
   /**
    * Method that handles the oncoming messages
    * @return
    */
   def receive = {
+    case NextNodesToSelf(excluded, numberOfNodes) => getCloseNodesToSelf(excluded, numberOfNodes)
+    case NextNodesFrom(origin, excluded, numberOfNodes) => getCloseNodesFrom(origin, excluded, numberOfNodes)
     case UpdatedCoordinates(newCoordinates, rps) => updateCoordinates(newCoordinates, rps)
-    case _ => log.info("Message Inconnu")
+    case _ => log.info("Unkown Message")
+  }
+
+  /**
+   * Method that retrieves the closest nodes from self
+   * @param excluded excluded nodes from the result by default nothing is excluded
+   * @param numberOfNodes number of nodes to return by default we return one node
+   * @return a Sequence of the closest nodes
+   */
+  def getCloseNodesToSelf(excluded: Set[nodeInfo], numberOfNodes: Int): Seq[nodeInfo] = {
+    // we take as a reference the current node, we only have to retrieve the n first elements of the list without the excluded nodes
+    closeNodes.filterNot(excluded contains).take(numberOfNodes)
+  }
+
+  /**
+   * Method that retrieves the closest nodes from the origin
+   * @param origin reference node
+   * @param excluded excluded nodes from the result. By default nothing is excluded
+   * @param numberOfNodes number of nodes to return. By default we return one node
+   * @return a Sequence of the closest nodes
+   */
+  def getCloseNodesFrom(origin: nodeInfo, excluded: Set[nodeInfo] , numberOfNodes: Int ): Seq[nodeInfo] = {
+      // we just have to compute the distances between the reference and the nodes in memory, sort them, and send the n closest without excluded nodes
+      val relativeDistancesSeq = closeNodes.map(node => node.copy(distanceFromSelf = computeDistanceBtw(origin.coordinates,this.coordinates)))
+      relativeDistancesSeq.sorted.filterNot(excluded contains).take(numberOfNodes)
   }
 
   /**
@@ -78,8 +115,7 @@ class Main extends Actor {
     closeNodes = RPSCloseNodesToAdd ++ closeNodes
 
     log.debug("Ordering closest node List")
-    closeNodes.sorted
-    //TODO Troncate the list to only keep the n first element. We first have to define the configuration part
+    closeNodes = closeNodes.sorted.take(numberOfCloseNodes)
   }
 
   /**
@@ -88,11 +124,63 @@ class Main extends Actor {
    * @return
    */
   def computeDistanceToSelf(externCoordinates: Coordinates): Double = {
-    hypot(coordinates.x-externCoordinates.x,coordinates.y-externCoordinates.y)
+    computeDistanceBtw(coordinates,externCoordinates)
+  }
+
+  /**
+   * Compute the distance between two coordinates
+   * @param a coordinates of the point a
+   * @param b coordinates of the point b
+   * @return distance between the two points
+   */
+  def computeDistanceBtw(a: Coordinates, b: Coordinates): Double = {
+    hypot(a.x-b.x,a.y-b.y)
   }
 
   def initSystem(){
 
+  }
+
+  case class CountCalls();
+
+  val firstCallTime = configInit.getInt("firstCallTime")
+  val timeBetweenCallsFirst = configInit.getInt("timeBetweenCallsFirst")
+  val timeBetweenCallsThen = configInit.getInt("timeBetweenCallsThen")
+  val numberOfNodesCalled = configInit.getInt("numberOfNodesCalled")
+  val changeTime =  configInit.getInt("changeTime")
+
+  var numberOfCalls = 0
+
+  val myInfo = RPSInfo(null, null, coordinates, 0) // TODO Fix that
+
+  /**
+   *  First call made
+  Used to init the system with a first node
+   */
+  val initScheduler = context.system.scheduler.scheduleOnce(firstCallTime seconds){
+     network ! FirstContact(null)
+  }
+
+  /**
+   *  Creates a scheduler
+  Calls network with case class DoRPSRequest in argument
+  First call will be made after firstCallTime ms
+  Calls made each timeBetweenCalls ms
+   */
+  val schedulerRPSFirst = context.system.scheduler.schedule(timeBetweenCallsFirst seconds, timeBetweenCallsFirst seconds){
+    log.debug("Scheduler for RPS request called")
+    log.debug(s"$numberOfNodesCalled nodes will be called")
+    network ! DoRPSRequest(myInfo, numberOfNodesCalled)
+  }
+
+  val schedulerChangeFrequency = context.system.scheduler.scheduleOnce(changeTime seconds){
+    schedulerRPSFirst.cancel()
+  }
+
+  val schedulerRPSThen = context.system.scheduler.schedule(changeTime seconds, timeBetweenCallsThen seconds){
+    log.debug("Scheduler for RPS request called")
+    log.debug(s"$numberOfNodesCalled nodes will be called")
+    network ! DoRPSRequest(myInfo, numberOfNodesCalled)
   }
 
 }
