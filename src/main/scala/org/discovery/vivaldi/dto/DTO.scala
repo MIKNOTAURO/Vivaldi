@@ -71,6 +71,10 @@ case class Coordinates(x: Double, y: Double) {
     Coordinates(this.x + that.x, this.y + that.y)
   }
 
+  def length(): Double = {
+    Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2))
+  }
+
   override def equals(obj: Any) = obj match {
     case that: Coordinates =>  this.x == that.x && this.y == that.y
     case _ => false

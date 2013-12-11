@@ -38,7 +38,7 @@ import scala.util.Random
      case _ => log.info("Message Inconnu")
    }
 
-   def compute(rps: Iterable[RPSInfo]) {
+   def compute(rps: Iterable[RPSInfo]): Coordinates = {
      log.debug(s"Received RPS $rps")
      //Vivaldi algorithm
      for (oneRps <- rps) {
@@ -48,6 +48,7 @@ import scala.util.Random
      log.debug(s"New coordinates computed: $coordinates")
      log.debug("Sending coordinates to the system actor")
      system ! UpdatedCoordinates(coordinates, rps) //Envoi des coordonnées calculées à la brique Système
+     coordinates
    }
 
    def computeOne(oneRps: RPSInfo): Coordinates = {
@@ -56,8 +57,8 @@ import scala.util.Random
      //TODO see what value we assign to delta
 
      // Compute error of this sample. (1)
-     val diffX = coordinates.x - oneRps.coordinates.x
-     val diffY = coordinates.y - oneRps.coordinates.y
+     val diffX = oneRps.coordinates.x - coordinates.x
+     val diffY = oneRps.coordinates.y - coordinates.y
      val e = oneRps.ping - hypot(diffX, diffY)
      // Find the direction of the force the error is causing. (2)
      val dir = findDir(diffX, diffY)
@@ -75,7 +76,8 @@ import scala.util.Random
        val hyp = hypot(abs, ord)
        Coordinates(abs/hyp, ord/hyp)
      } else {
-       Coordinates(math.abs(diffX)/diffX, math.abs(diffY)/diffY)
+       val hyp = hypot(diffX, diffY)
+       Coordinates(diffX/hyp, diffY/hyp)
      }
    }
 
