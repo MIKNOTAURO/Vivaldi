@@ -47,7 +47,7 @@ object Communication{
   case class NewRPS(rps:Iterable[RPSInfo])
 }
 
-class Communication(vivaldiCore: ActorRef) extends Actor {
+class Communication(vivaldiCore: ActorRef, main: ActorRef) extends Actor {
 
   val log = Logging(context.system, this)
 
@@ -125,6 +125,7 @@ class Communication(vivaldiCore: ActorRef) extends Actor {
       }
       else {
         log.error("Can't figure out response type")
+        main ! DeleteCloseNode(info)
         null
       }
     }
