@@ -82,7 +82,7 @@ case class Coordinates(x: Double, y: Double) {
  * is not responding to ping
  * @param node to delete
  */
-case class DeleteCloseNode(node: RPSInfo)
+case class DeleteCloseNode(nodeToDelete: RPSInfo)
 
 case class DoRPSRequest(newInfo:RPSInfo,numberOfNodesToContact: Int) // System-Network Message
 
