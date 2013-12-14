@@ -140,10 +140,10 @@ class Main extends Actor {
 
   /**
    * Methods that deletes a node from the close node list when a ping isn't correct.
-   * @param node to delete from the list
+   * @param nodetoDelete to delete from the list
    */
-  def deleteCloseNode(node: RPSInfo){
-    closeNodes = closeNodes.filterNot(_.node.path == node.node.path)
+  def deleteCloseNode(nodetoDelete: RPSInfo){
+    closeNodes = closeNodes.filterNot(_.node.path == nodetoDelete.node.path)
   }
 
   def initSystem(){
