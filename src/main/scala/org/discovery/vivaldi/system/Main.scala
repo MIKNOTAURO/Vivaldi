@@ -143,8 +143,7 @@ class Main extends Actor {
    * @param node to delete from the list
    */
   def deleteCloseNode(node: RPSInfo){
-    val toDelete = CloseNodeInfo(node.node, node.systemInfo, node.coordinates,0)
-    closeNodes = closeNodes.filter((node:CloseNodeInfo)=> node != toDelete)
+    closeNodes = closeNodes.filterNot(_.node.path == node.node.path)
   }
 
   def initSystem(){
