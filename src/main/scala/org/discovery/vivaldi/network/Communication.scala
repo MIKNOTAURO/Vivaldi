@@ -90,8 +90,7 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef) extends Actor {
     val rpses = rpsList.toList.flatMap {
       _.rps
     }
-    val withOwn = rpses ::: rps.toList
-    Random.shuffle(withOwn).take(rpsSize)
+    Random.shuffle(rpses:::(rps.toList)).take(rpsSize)
   }
 
   def contactNodes(numberOfNodesToContact: Int) {
