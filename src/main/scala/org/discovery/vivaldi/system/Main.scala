@@ -40,7 +40,7 @@ class Main extends Actor {
 
   //Creating child actors
   val vivaldiCore = context.actorOf(Props(classOf[ComputingAlgorithm], self), "VivaldiCore")
-  val network = context.actorOf(Props(classOf[Communication], vivaldiCore), "Network")
+  val network = context.actorOf(Props(classOf[Communication], vivaldiCore, self), "Network")
 
   var coordinates: Coordinates = Coordinates(0,0)
   var closeNodes: Seq[CloseNodeInfo] = Seq()
@@ -57,6 +57,7 @@ class Main extends Actor {
     case NextNodesToSelf(excluded, numberOfNodes) => getCloseNodesToSelf(excluded, numberOfNodes)
     case NextNodesFrom(origin, excluded, numberOfNodes) => getCloseNodesFrom(origin, excluded, numberOfNodes)
     case UpdatedCoordinates(newCoordinates, rps) => updateCoordinates(newCoordinates, rps)
+    case DeleteCloseNode(toDelete) => deleteCloseNode(toDelete)
     case _ => log.info("Unkown Message")
   }
 
@@ -135,6 +136,14 @@ class Main extends Actor {
    */
   def computeDistanceBtw(a: Coordinates, b: Coordinates): Double = {
     hypot(a.x-b.x,a.y-b.y)
+  }
+
+  /**
+   * Methods that deletes a node from the close node list when a ping isn't correct.
+   * @param nodeToDelete to delete from the list
+   */
+  def deleteCloseNode(nodeToDelete: RPSInfo){
+    closeNodes = closeNodes.filterNot(_.node.path == nodeToDelete.node.path)
   }
 
   def initSystem(){

@@ -77,6 +77,13 @@ case class Coordinates(x: Double, y: Double) {
   }
 }
 
+/**
+ * Message to delete a node from the close node list when a pinged node in the network part
+ * is not responding to ping
+ * @param node to delete
+ */
+case class DeleteCloseNode(nodeToDelete: RPSInfo)
+
 case class DoRPSRequest(newInfo:RPSInfo,numberOfNodesToContact: Int) // System-Network Message
 
 case class FirstContact(node: ActorRef) //System-Network Message

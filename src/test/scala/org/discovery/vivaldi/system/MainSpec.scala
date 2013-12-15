@@ -90,6 +90,11 @@ class MainSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with
         testMainActor.underlyingActor.getCloseNodesFrom(closeNodeThree,Set(closeNodeOne),1)
       }
     }
+
+    "Be able to delete a node from the close node list" in {
+      testMainActor.underlyingActor.deleteCloseNode(rpsThree)
+      assert(Seq(closeNodeOne,closeNodeTwo) == testMainActor.underlyingActor.closeNodes)
+    }
   }
 
   "The main actor for initialization" must {
