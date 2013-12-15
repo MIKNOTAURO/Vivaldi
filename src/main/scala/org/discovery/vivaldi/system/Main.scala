@@ -162,7 +162,7 @@ class Main extends Actor {
   Used to init the system with a first node
    */
   val initScheduler = context.system.scheduler.scheduleOnce(firstCallTime seconds){
-     network ! FirstContact(null) // TODO Fix that
+     network ! FirstContact(self) // TODO Fix that
   }
 
   /**
