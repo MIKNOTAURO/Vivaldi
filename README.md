@@ -81,11 +81,11 @@ How to use :
 
 ```scala
 log.info("Information message")
-``̀
+```
 
 There are different types of logging messages :
-* `info` which is used to give information on the program state, for example "Service x Lunched"
-* `debug` which is used to give informations to understand what is going on when the program fails. For example, "x=7"
+* `info` which is used to give information on the program state, for example "Service x Launched"
+* `debug` which is used to give information to understand what is going on when the program fails. For example, "x=7"
 * `error` which is used to print errors, for example "Impossible to speak with Roger"
 * `warning` which is used to print little issues that are not bothering the system, for example "no name given, default name will be used"
 
