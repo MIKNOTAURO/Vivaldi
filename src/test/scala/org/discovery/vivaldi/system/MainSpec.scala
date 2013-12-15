@@ -105,8 +105,8 @@ class MainSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with
     "first scheduler active before changeTime" in {
       within (changeTime-1 seconds){
         expectNoMsg
-        assertResult(true){
-          !mainActor.underlyingActor.schedulerRPSFirst.isCancelled
+        assertResult(false){
+          mainActor.underlyingActor.schedulerRPSFirst.isCancelled
         }
       }
     }
@@ -117,6 +117,7 @@ class MainSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with
         assertResult(true){
           mainActor.underlyingActor.schedulerRPSFirst.isCancelled
         }
+        mainActor.underlyingActor.schedulerRPSThen.cancel()
       }
     }
 

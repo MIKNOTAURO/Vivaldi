@@ -186,7 +186,7 @@ class Main extends Actor {
   def callNetwork() = {
     log.debug("Scheduler for RPS request called")
     log.debug(s"$numberOfNodesCalled nodes will be called")
-    val myInfo = RPSInfo(null, null, coordinates, 0)
+    val myInfo = RPSInfo(self, null, coordinates, 0)
     network ! DoRPSRequest(myInfo, numberOfNodesCalled)
   }
 
