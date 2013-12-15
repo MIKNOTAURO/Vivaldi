@@ -58,7 +58,7 @@ class Main extends Actor {
     case NextNodesFrom(origin, excluded, numberOfNodes) => getCloseNodesFrom(origin, excluded, numberOfNodes)
     case UpdatedCoordinates(newCoordinates, rps) => updateCoordinates(newCoordinates, rps)
     case DeleteCloseNode(toDelete) => deleteCloseNode(toDelete)
-    case unknownMessage => log.info("Unkown Message :"++unknownMessage.toString)
+    case unknownMessage => log.info("Unkown Message ",unknownMessage)
   }
 
   /**
