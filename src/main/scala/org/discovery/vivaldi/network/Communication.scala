@@ -121,7 +121,7 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef) extends Actor {
         vivaldiCore ! UpdatedRPS(newRPS)
         rps = mixRPS(newInfos)
       }
-      case x => log.error("RPS request failed! " ++ x.toString)
+      case x => log.error("RPS request failed! ",x)
     }
   }
 
