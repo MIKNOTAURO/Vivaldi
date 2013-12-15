@@ -58,7 +58,7 @@ class Main extends Actor {
     case NextNodesFrom(origin, excluded, numberOfNodes) => getCloseNodesFrom(origin, excluded, numberOfNodes)
     case UpdatedCoordinates(newCoordinates, rps) => updateCoordinates(newCoordinates, rps)
     case DeleteCloseNode(toDelete) => deleteCloseNode(toDelete)
-    case _ => log.info("Unkown Message")
+    case _ => log.info("Unknown Message")
   }
 
   /**
@@ -99,7 +99,7 @@ class Main extends Actor {
 
     log.debug("Computing & updating distances")
     //Computing the distances from the RPS table
-    val RPSCloseNodes = rps.map(node => CloseNodeInfo(node.node, node.systemInfo, node.coordinates,computeDistanceToSelf(node.coordinates)))
+    val RPSCloseNodes = rps.map(node => CloseNodeInfo(node.node, node.coordinates,computeDistanceToSelf(node.coordinates)))
 
     //TODO Test contain with data and code the method equals for closeNodes
     //Retrieve nodes to update
@@ -150,24 +150,19 @@ class Main extends Actor {
 
   }
 
-  case class CountCalls();
-
   val firstCallTime = configInit.getInt("firstCallTime")
   val timeBetweenCallsFirst = configInit.getInt("timeBetweenCallsFirst")
   val timeBetweenCallsThen = configInit.getInt("timeBetweenCallsThen")
   val numberOfNodesCalled = configInit.getInt("numberOfNodesCalled")
   val changeTime =  configInit.getInt("changeTime")
 
-  var numberOfCalls = 0
-
-  val myInfo = RPSInfo(null, null, coordinates, 0) // TODO Fix that
 
   /**
    *  First call made
   Used to init the system with a first node
    */
   val initScheduler = context.system.scheduler.scheduleOnce(firstCallTime seconds){
-     network ! FirstContact(null)
+     network ! FirstContact(self) // TODO Fix that
   }
 
   /**
@@ -177,9 +172,7 @@ class Main extends Actor {
   Calls made each timeBetweenCalls ms
    */
   val schedulerRPSFirst = context.system.scheduler.schedule(timeBetweenCallsFirst seconds, timeBetweenCallsFirst seconds){
-    log.debug("Scheduler for RPS request called")
-    log.debug(s"$numberOfNodesCalled nodes will be called")
-    network ! DoRPSRequest(myInfo, numberOfNodesCalled)
+    callNetwork()
   }
 
   val schedulerChangeFrequency = context.system.scheduler.scheduleOnce(changeTime seconds){
@@ -187,8 +180,13 @@ class Main extends Actor {
   }
 
   val schedulerRPSThen = context.system.scheduler.schedule(changeTime seconds, timeBetweenCallsThen seconds){
+     callNetwork()
+  }
+
+  def callNetwork() = {
     log.debug("Scheduler for RPS request called")
     log.debug(s"$numberOfNodesCalled nodes will be called")
+    val myInfo = RPSInfo(self, coordinates, 0)
     network ! DoRPSRequest(myInfo, numberOfNodesCalled)
   }
 
