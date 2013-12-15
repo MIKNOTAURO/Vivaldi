@@ -9,6 +9,8 @@ import org.discovery.vivaldi.dto.RPSInfo
 import org.discovery.vivaldi.dto.UpdatedCoordinates
 import org.discovery.vivaldi.dto.SystemInfo
 import scala.math.sqrt
+import org.discovery.vivaldi.system.Main
+import org.discovery.vivaldi.core.ComputingAlgorithm
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -41,14 +43,14 @@ class ComputingAlgorithmSpec extends TestKit(ActorSystem("testSystem")) with Wor
     //val rpsThree = RPSInfo(mainActorThree.underlyingActor.network,SystemInfo(8,2048),Coordinates(0,1),10)
     //val newRpsTable = Seq(rpsTwo,rpsThree)
 
-    val algorithmTestOne = TestActorRef[ComputingAlgorithm]
+    val algorithmTestOne = TestActorRef[Main]
     //val algorithmTestTwo = TestActorRef[ComputingAlgorithm]
 
     "Find the direction towards which it will move its coordinates" in {
       val a = 3.0
       val b = -4.0
       assertResult(Coordinates(0.6, -0.8)) {
-        algorithmTestOne.underlyingActor.findDir(a, b)
+        algorithmTestOne.underlyingActor.vivaldiCore.findDir(a, b)
       }
     }
 

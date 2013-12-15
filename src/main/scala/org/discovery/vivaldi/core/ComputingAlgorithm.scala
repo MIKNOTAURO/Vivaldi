@@ -80,5 +80,4 @@ import scala.util.Random
        Coordinates(diffX/hyp, diffY/hyp)
      }
    }
-
 }
