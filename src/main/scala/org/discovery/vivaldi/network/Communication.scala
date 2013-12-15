@@ -106,10 +106,7 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef) extends Actor {
           Pong(sendTime, selfInfo, otherRPS) = result
         //if selfInfo != null
         } yield {
-          log.error("Result: " ++ result.toString)
-
           val pingTime = System.currentTimeMillis() - sendTime
-          log.debug("Our old self info :" ++ selfInfo.toString ++ " Our old result :" ++ result.toString)
           val newSelfInfo = selfInfo.copy(ping = pingTime)
           result.copy(selfInfo = newSelfInfo)
         }
@@ -119,6 +116,7 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef) extends Actor {
 
     allAsks onComplete {
       case Success(newInfos: Iterable[Pong]) => {
+        log.debug("Finished pinging, going to mix")
         val newRPS = newInfos.map(_.selfInfo)
         vivaldiCore ! UpdatedRPS(newRPS)
         rps = mixRPS(newInfos)
@@ -130,7 +128,6 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef) extends Actor {
 
   def askPing(info:RPSInfo): Future[Pong]= {
     //we ask, if it fails (like in a Timeout, notably), we instead return null
-    log.error("in askPing : info : " ++ info.toString)
     val future = ask(info.node, Ping(System.currentTimeMillis(), myInfo))(10 seconds) fallbackTo Future(null)
     future.map {
       result =>
