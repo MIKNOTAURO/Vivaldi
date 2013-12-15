@@ -102,7 +102,7 @@ class MainSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with
     val mainActor = TestActorRef[Main]
     val changeTime = mainActor.underlyingActor.changeTime
 
-    "first scheduler active before changeTime" in {
+    "not cancel the first scheduler before changeTime" in {
       within (changeTime-1 seconds){
         expectNoMsg
         assertResult(false){
@@ -111,7 +111,7 @@ class MainSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with
       }
     }
 
-    "first scheduler cancelled after changeTime" in {
+    "cancel the first scheduler after changeTime" in {
       within (changeTime-1 seconds, changeTime+1 seconds){
         expectNoMsg
         assertResult(true){
