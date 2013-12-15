@@ -68,7 +68,7 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef) extends Actor {
       myInfo=newInfo  // we use RPSInfo to propagate new systemInfo and coordinates
       contactNodes(numberOfNodesToContact)
     }
-    case FirstContact(node) => rps =Seq(RPSInfo(node,null,1000000))// I don't know the system information here
+    case FirstContact(node) => rps = Seq(RPSInfo(node,null,1000000))// I don't know the system information here
     case NewRPS(newRPS) => rps = newRPS
     case _ => {
       log.info("Unknown message")

@@ -9,6 +9,7 @@ import org.discovery.vivaldi.dto.Coordinates
 import org.discovery.vivaldi.dto.RPSInfo
 import org.discovery.vivaldi.dto.UpdatedCoordinates
 import scala.math.sqrt
+
 /* ============================================================
  * Discovery Project - AkkaArc
  * http://beyondtheclouds.github.io/
