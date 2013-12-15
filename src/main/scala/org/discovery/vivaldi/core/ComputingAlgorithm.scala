@@ -57,8 +57,8 @@ import scala.util.Random
      //TODO see what value we assign to delta
 
      // Compute error of this sample. (1)
-     val diffX = oneRps.coordinates.x - coordinates.x
-     val diffY = oneRps.coordinates.y - coordinates.y
+     val diffX = coordinates.x - oneRps.coordinates.x
+     val diffY = coordinates.y - oneRps.coordinates.y
      val e = oneRps.ping - hypot(diffX, diffY)
      // Find the direction of the force the error is causing. (2)
      val dir = findDir(diffX, diffY)

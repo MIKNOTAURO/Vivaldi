@@ -36,7 +36,7 @@ class ComputingAlgorithmSpec extends TestKit(ActorSystem("testSystem")) with Wor
 
     val rpsOne = RPSInfo(mainActorOne.underlyingActor.network,SystemInfo(4,1024),Coordinates(3,-4),10)
     val rpsTwo = RPSInfo(mainActorTwo.underlyingActor.network,SystemInfo(2,512),Coordinates(3,-4),10)
-    val rpsThree = RPSInfo(mainActorThree.underlyingActor.network,SystemInfo(8,2048),Coordinates(-1.5,2),10)
+    val rpsThree = RPSInfo(mainActorThree.underlyingActor.network,SystemInfo(8,2048),Coordinates(-4.5,6),10)
     val newRpsTable = Seq(rpsTwo,rpsThree)
 
     val algorithmTestOne: TestActorRef[ComputingAlgorithm] = TestActorRef(Props(classOf[ComputingAlgorithm], mainActorOne), "TestCoreActorOne")
@@ -68,7 +68,7 @@ class ComputingAlgorithmSpec extends TestKit(ActorSystem("testSystem")) with Wor
     }
 
     "Compute its new vivaldi coordinates for a single RPS info" in {
-      assertResult(Coordinates(1.5, -2.0)){
+      assertResult(Coordinates(-1.5, 2.0)){
         algorithmTestTwo.underlyingActor.computeOne(rpsOne)
       }
     }

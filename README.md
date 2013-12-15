@@ -46,7 +46,13 @@ Every time the vivaldi algorithm computes the node's coordinates, it sends the c
 * We order them
 * We keep the n first elements (n is user-defined)
 
+### Core
 
+The core actor recalculates the position of the node given a number of other nodes and using the distributed version of the vivaldi algorithm.
+
+![VivaldiGSI Algorithm](/reports/VivaldiAlgorithm.png "Algorithm")
+
+Basically, for each node given, it moves in the direction of the balance position by 50% of the distance between it and its current position.
 
 How to use
 ==========
