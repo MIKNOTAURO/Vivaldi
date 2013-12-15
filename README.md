@@ -78,6 +78,7 @@ Logging
 We are using Akka's logging system so that we can easily choose the output (File or Console). We use the console by default.
 
 How to use :
+
 '''scala
 log.info("Information message")
 '''

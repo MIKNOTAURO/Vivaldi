@@ -5,7 +5,6 @@ import akka.event.Logging
 import org.discovery.vivaldi.dto._
 import scala.concurrent.Future
 import akka.pattern.ask
-import scala.collection.mutable
 import scala.util.Random
 import akka.util.Timeout
 import scala.concurrent.duration._
