@@ -39,16 +39,16 @@ class MainSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with
     val mainActorTwo = TestActorRef[Main]
     val mainActorThree = TestActorRef[Main]
 
-    val rpsOne = RPSInfo(mainActorOne.underlyingActor.network,SystemInfo(4,1024),Coordinates(1,0),10)
-    val rpsTwo = RPSInfo(mainActorTwo.underlyingActor.network,SystemInfo(2,512),Coordinates(3,1),20)
-    val rpsThree = RPSInfo(mainActorThree.underlyingActor.network,SystemInfo(8,2048),Coordinates(3,4),50)
+    val rpsOne = RPSInfo(mainActorOne.underlyingActor.network,Coordinates(1,0),10)
+    val rpsTwo = RPSInfo(mainActorTwo.underlyingActor.network,Coordinates(3,1),20)
+    val rpsThree = RPSInfo(mainActorThree.underlyingActor.network,Coordinates(3,4),50)
     val newRpsTable = Seq(rpsOne,rpsTwo,rpsThree)
 
     val newCoordinates = Coordinates(1,1)
 
-    val closeNodeOne = CloseNodeInfo(mainActorOne.underlyingActor.network,SystemInfo(4,1024),Coordinates(1,0),1)
-    val closeNodeTwo = CloseNodeInfo(mainActorTwo.underlyingActor.network,SystemInfo(2,512),Coordinates(3,1),2)
-    val closeNodeThree = CloseNodeInfo(mainActorThree.underlyingActor.network,SystemInfo(8,2048),Coordinates(3,4),sqrt(13))
+    val closeNodeOne = CloseNodeInfo(mainActorOne.underlyingActor.network,Coordinates(1,0),1)
+    val closeNodeTwo = CloseNodeInfo(mainActorTwo.underlyingActor.network,Coordinates(3,1),2)
+    val closeNodeThree = CloseNodeInfo(mainActorThree.underlyingActor.network,Coordinates(3,4),sqrt(13))
     val closeNodesToBe = Seq(closeNodeOne,closeNodeTwo,closeNodeThree)
 
     "Compute the distance between two points" in {

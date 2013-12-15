@@ -38,12 +38,16 @@ import org.discovery.vivaldi.dto.RPSInfo
  * ============================================================ */
 
 
-object Communication{
+object Communication {
+
   // Ping/Pong are used in the RPS update process, to measure ping and recover new RPSs
-  case class Ping(sendTime:Long, selfInfo: RPSInfo)
-  case class Pong(sendTime:Long,selfInfo:RPSInfo,rps:Iterable[RPSInfo])
+  case class Ping(sendTime: Long, selfInfo: RPSInfo)
+
+  case class Pong(sendTime: Long, selfInfo: RPSInfo, rps: Iterable[RPSInfo])
+
   //NewRPS is used to update the RPS (in the "mix RPS" phase)
-  case class NewRPS(rps:Iterable[RPSInfo])
+  case class NewRPS(rps: Iterable[RPSInfo])
+
 }
 
 class Communication(vivaldiCore: ActorRef, main: ActorRef) extends Actor {
@@ -58,48 +62,58 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef) extends Actor {
   implicit val pingTimeout = Timeout(5 seconds)
 
   //TODO set systemInfo
-  var myInfo:RPSInfo= RPSInfo(self,null,Coordinates(0,0),0)//the ping in myInfo isn't used
+  var myInfo: RPSInfo = RPSInfo(self, Coordinates(0, 0), 23) //the ping in myInfo isn't used , so using as a "source" id
 
 
   def receive = {
 
     case ping: Ping => receivePing(ping)
-    case DoRPSRequest(newInfo:RPSInfo,numberOfNodesToContact) => {
-      myInfo=newInfo  // we use RPSInfo to propagate new systemInfo and coordinates
+    case DoRPSRequest(newInfo: RPSInfo, numberOfNodesToContact) => {
+      myInfo = newInfo // we use RPSInfo to propagate new systemInfo and coordinates
       contactNodes(numberOfNodesToContact)
     }
-    case FirstContact(node) => rps =Seq(RPSInfo(node,null,null,1000000))// I don't know the system information here
+    case FirstContact(node) => rps = Seq(RPSInfo(node, Coordinates(0, 0), 1000000)) // I don't know the system information here
     case NewRPS(newRPS) => rps = newRPS
-    case _ => {
-      log.info("Unknown message")
+    case unknownMessage => {
+      log.info("Unknown message : "++unknownMessage.toString)
     }
   }
 
   def receivePing(ping: Ping) {
+    //size check is necessary to make sure our rps grows at one point (this will make our rps initially very self-biased.
+    log.debug("Recieved ping from :" ++ ping.toString)
+    rps = Random.shuffle(ping.selfInfo +: (if (rps.size == rpsSize) rps.tail else rps).toSeq)
     sender ! Pong(ping.sendTime, myInfo, rps)
-    rps = Random.shuffle(ping.selfInfo +: rps.tail.toSeq) //replacing the first element of the rps by the pinger and shuffling all that
   }
 
   def mixRPS(rpsList: Iterable[Pong]): Iterable[RPSInfo] = {
-    Random.shuffle(rpsList.flatMap(_.rps)).take(rpsSize)
+    val rpses = rpsList.toList.flatMap {
+      _.rps
+    }
+    val withOwn = rpses ::: rps.toList
+    Random.shuffle(withOwn).take(rpsSize)
   }
 
   def contactNodes(numberOfNodesToContact: Int) {
     log.debug(s"Order to contact $numberOfNodesToContact received")
-    val toContact = rps.take(numberOfNodesToContact)
-    val asks= toContact map askPing
+    val toContact = rps.take(Math.min(rps.size, numberOfNodesToContact))
+    val asks = toContact map askPing
 
-    val updatedAsks: Iterable[Future[Pong]] = asks.map { ask =>
-      for {
-        result <- ask
-        if result != null
-        Pong(sendTime,selfInfo,otherRPS) = result
-        if selfInfo != null
-      } yield {
-        val pingTime = System.currentTimeMillis()-sendTime
-        val newSelfInfo = selfInfo.copy(ping = pingTime)
-        result.copy(selfInfo = newSelfInfo)
-      }
+    val updatedAsks: Iterable[Future[Pong]] = asks.map {
+      ask =>
+        for {
+          result <- ask
+          if result != null
+          Pong(sendTime, selfInfo, otherRPS) = result
+        //if selfInfo != null
+        } yield {
+          log.error("Result: " ++ result.toString)
+
+          val pingTime = System.currentTimeMillis() - sendTime
+          log.debug("Our old self info :" ++ selfInfo.toString ++ " Our old result :" ++ result.toString)
+          val newSelfInfo = selfInfo.copy(ping = pingTime)
+          result.copy(selfInfo = newSelfInfo)
+        }
     }
 
     val allAsks = Future sequence updatedAsks
@@ -110,23 +124,26 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef) extends Actor {
         vivaldiCore ! UpdatedRPS(newRPS)
         rps = mixRPS(newInfos)
       }
-      case _ => log.error("RPS request failed!")
+      case x => log.error("RPS request failed! " ++ x.toString)
     }
   }
 
 
-  def askPing(info:RPSInfo): Future[Pong]= {
+  def askPing(info: RPSInfo): Future[Pong] = {
     //we ask, if it fails (like in a Timeout, notably), we instead return null
-    val future = ask(info.node,Ping(System.currentTimeMillis(), myInfo))(10 seconds) fallbackTo Future(null)
-    future.map{result =>
-      if (result.isInstanceOf[Pong]) {
-        result.asInstanceOf[Pong]
-      }
-      else {
-        log.error("Can't figure out response type")
-        main ! DeleteCloseNode(info)
-        null
-      }
+    log.error("in askPing : info : " ++ info.toString)
+    val future = ask(info.node, Ping(System.currentTimeMillis(), myInfo))(10 seconds) fallbackTo Future(null)
+    future.map {
+      result =>
+        if (result.isInstanceOf[Pong]) {
+          result.asInstanceOf[Pong]
+        }
+        else {
+
+          log.error("Can't figure out response type: " ++ result.toString)
+          main ! DeleteCloseNode(info)
+          null
+        }
     }
   }
 }

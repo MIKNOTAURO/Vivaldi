@@ -1,8 +1,12 @@
 package org.discovery.vivaldi.network
 
-import akka.actor.ActorSystem
-import akka.testkit.TestKit
+
+import akka.actor.{Props, ActorSystem, Actor}
+import akka.testkit.{TestActor,TestActorRef, TestKit,ImplicitSender}
 import org.scalatest.{MustMatchers, WordSpecLike}
+import org.discovery.vivaldi.network.Communication._
+import org.discovery.vivaldi.system.Main
+import org.discovery.vivaldi.dto.{Coordinates, RPSInfo}
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -23,6 +27,20 @@ import org.scalatest.{MustMatchers, WordSpecLike}
  * limitations under the License.
  * ============================================================ */
 
-class CommunicationSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with MustMatchers {
 
+class CommunicationSpec extends TestKit(ActorSystem("testSystem")) with ImplicitSender with WordSpecLike with MustMatchers {
+  "The network block " must {
+      val actor = TestActorRef[Main]
+      val com   = TestActorRef[Communication](new Communication(actor.underlyingActor.vivaldiCore,actor))
+
+      "put pingers into RPS" in {
+        com.receive(Ping(System.currentTimeMillis(),RPSInfo(self,Coordinates(0,0),12)),self)
+        expectMsgClass(Pong(0,null,null).getClass)
+        com.underlyingActor.rps.exists { case RPSInfo(id,x,y) => id == self }
+      }
+
+      "have an increasing RPS initially " in {
+              //TODO write
+      }
+  }
 }
