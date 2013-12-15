@@ -79,9 +79,9 @@ We are using Akka's logging system so that we can easily choose the output (File
 
 How to use :
 
-'''scala
+```scala
 log.info("Information message")
-'''
+``̀
 
 There are different types of logging messages :
 * `info` which is used to give information on the program state, for example "Service x Lunched"
