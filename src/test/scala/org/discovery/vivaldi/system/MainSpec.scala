@@ -1,13 +1,13 @@
 package org.discovery.vivaldi.system
 
 import akka.testkit.{TestActorRef, TestKit}
-import akka.actor.{ActorRef, ActorSystem}
+import akka.actor.{ActorSystem}
 import org.scalatest.{WordSpecLike, MustMatchers}
+import scala.concurrent.duration._
 import org.discovery.vivaldi.dto._
 import org.discovery.vivaldi.dto.Coordinates
 import org.discovery.vivaldi.dto.RPSInfo
 import org.discovery.vivaldi.dto.UpdatedCoordinates
-import org.discovery.vivaldi.dto.SystemInfo
 import scala.math.sqrt
 
 /* ============================================================
@@ -98,6 +98,28 @@ class MainSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with
   }
 
   "The main actor for initialization" must {
+
+    val mainActor = TestActorRef[Main]
+    val changeTime = mainActor.underlyingActor.changeTime
+
+    "not cancel the first scheduler before changeTime" in {
+      within (changeTime-1 seconds){
+        expectNoMsg
+        assertResult(false){
+          mainActor.underlyingActor.schedulerRPSFirst.isCancelled
+        }
+      }
+    }
+
+    "cancel the first scheduler after changeTime" in {
+      within (changeTime-1 seconds, changeTime+1 seconds){
+        expectNoMsg
+        assertResult(true){
+          mainActor.underlyingActor.schedulerRPSFirst.isCancelled
+        }
+        mainActor.underlyingActor.schedulerRPSThen.cancel()
+      }
+    }
 
   }
 

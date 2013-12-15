@@ -129,7 +129,7 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef) extends Actor {
   }
 
 
-  def askPing(info: RPSInfo): Future[Pong] = {
+  def askPing(info:RPSInfo): Future[Pong]= {
     //we ask, if it fails (like in a Timeout, notably), we instead return null
     log.error("in askPing : info : " ++ info.toString)
     val future = ask(info.node, Ping(System.currentTimeMillis(), myInfo))(10 seconds) fallbackTo Future(null)

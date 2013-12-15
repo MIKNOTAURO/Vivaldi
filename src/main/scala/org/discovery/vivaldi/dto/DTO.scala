@@ -35,7 +35,7 @@ trait nodeInfo {
  * @param coordinates
  * @param ping
  */
-case class RPSInfo(node: ActorRef, coordinates: Coordinates, ping: Long) extends nodeInfo
+case class RPSInfo(node: ActorRef,  coordinates: Coordinates, ping: Long) extends nodeInfo
 
 /**
  * Class containing the information about a node and its distance from the current node.
@@ -51,13 +51,6 @@ case class CloseNodeInfo(node: ActorRef, coordinates: Coordinates, distanceFromS
     case _ => false
   }
 }
-
-/**
- * Class containing information about the machine on which the node is running
- * @param cores
- * @param memory
- */
-case class SystemInfo(cores: Int, memory: Long)
 
 case class Coordinates(x: Double, y: Double) {
   def times(multiplier: Double): Coordinates =  {
@@ -75,10 +68,10 @@ case class Coordinates(x: Double, y: Double) {
 }
 
 /**
- * Message to delete a node from the close node list when a pinged node in the network part
- * is not responding to ping
- * @param node to delete
- */
+  * Message to delete a node from the close node list when a pinged node in the network part
+  * is not responding to ping
+  * @param nodeToDelete
+  */
 case class DeleteCloseNode(nodeToDelete: RPSInfo)
 
 case class DoRPSRequest(newInfo:RPSInfo,numberOfNodesToContact: Int) // System-Network Message
