@@ -81,8 +81,8 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef) extends Actor {
 
   def receivePing(ping: Ping) {
     //size check is necessary to make sure our rps grows at one point (this will make our rps initially very self-biased.
-    log.debug("Recieved ping from :"+ ping)
-    rps = Random.shuffle((if (rps.size == rpsSize) rps.tail else rps) + ping.selfInfo)
+    log.debug("Received ping from :"+ ping)
+    rps = Random.shuffle(rps + ping.selfInfo).take(rpsSize)
     sender ! Pong(ping.sendTime, myInfo, rps)
   }
 
