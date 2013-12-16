@@ -30,18 +30,14 @@ import scala.util.Random
 class ComputingAlgorithmSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with MustMatchers {
 
   "The core actor for the computing algorithm" must {
-    val mainActorOne = TestActorRef[Main]
-    val mainActorTwo = TestActorRef[Main]
-    val mainActorThree = TestActorRef[Main]
+    val mainActor = TestActorRef[Main]
 
-    val rpsOne = RPSInfo(mainActorOne.underlyingActor.network,SystemInfo(4,1024),Coordinates(3,-4),10)
-    val rpsTwo = RPSInfo(mainActorTwo.underlyingActor.network,SystemInfo(2,512),Coordinates(3,-4),10)
-    val rpsThree = RPSInfo(mainActorThree.underlyingActor.network,SystemInfo(8,2048),Coordinates(-4.5,6),10)
-    val newRpsTable = Seq(rpsTwo,rpsThree)
+    val rpsOne = RPSInfo(mainActor.underlyingActor.network,Coordinates(3,-4),10)
+    val rpsTwo = RPSInfo(mainActor.underlyingActor.network,Coordinates(-4.5,6),10)
+    val newRpsTable = Seq(rpsOne, rpsTwo)
 
-    val algorithmTestOne: TestActorRef[ComputingAlgorithm] = TestActorRef(Props(classOf[ComputingAlgorithm], mainActorOne), "TestCoreActorOne")
-    val algorithmTestTwo: TestActorRef[ComputingAlgorithm] = TestActorRef(Props(classOf[ComputingAlgorithm], mainActorTwo), "TestCoreActorTwo")
-    val algorithmTestThree: TestActorRef[ComputingAlgorithm] = TestActorRef(Props(classOf[ComputingAlgorithm], mainActorThree), "TestCoreActorThree")
+    val algorithmTestOne: TestActorRef[ComputingAlgorithm] = TestActorRef(Props(classOf[ComputingAlgorithm], mainActor), "TestCoreActorOne")
+    val algorithmTestTwo: TestActorRef[ComputingAlgorithm] = TestActorRef(Props(classOf[ComputingAlgorithm], mainActor), "TestCoreActorTwo")
 
     "Find the direction towards which it will move its coordinates" in {
       val a = 3.0
@@ -69,14 +65,14 @@ class ComputingAlgorithmSpec extends TestKit(ActorSystem("testSystem")) with Wor
 
     "Compute its new vivaldi coordinates for a single RPS info" in {
       assertResult(Coordinates(-1.5, 2.0)){
-        algorithmTestTwo.underlyingActor.computeOne(rpsOne)
+        algorithmTestOne.underlyingActor.computeOne(rpsOne)
       }
     }
 
     "Compute its new vivaldi coordinates for multiple RPS info" in {
       // By default the coordinates of the actor is (0,0)
       assertResult(Coordinates(0, 0)){
-        algorithmTestThree.underlyingActor.compute(newRpsTable)
+        algorithmTestTwo.underlyingActor.compute(newRpsTable)
       }
     }
   }
