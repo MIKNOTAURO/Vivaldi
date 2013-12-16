@@ -5,7 +5,6 @@ import akka.event.Logging
 import org.discovery.vivaldi.dto._
 import scala.concurrent.Future
 import akka.pattern.ask
-import scala.collection.mutable
 import scala.util.Random
 import akka.util.Timeout
 import scala.concurrent.duration._
@@ -47,7 +46,7 @@ object Communication{
   case class NewRPS(rps:Iterable[RPSInfo])
 }
 
-class Communication(vivaldiCore: ActorRef) extends Actor {
+class Communication(vivaldiCore: ActorRef, main: ActorRef) extends Actor {
 
   val log = Logging(context.system, this)
 
@@ -59,7 +58,7 @@ class Communication(vivaldiCore: ActorRef) extends Actor {
   implicit val pingTimeout = Timeout(5 seconds)
 
   //TODO set systemInfo
-  var myInfo:RPSInfo= RPSInfo(self,null,Coordinates(0,0),0)//the ping in myInfo isn't used
+  var myInfo:RPSInfo= RPSInfo(self,Coordinates(0,0),0)//the ping in myInfo isn't used
 
 
   def receive = {
@@ -69,7 +68,7 @@ class Communication(vivaldiCore: ActorRef) extends Actor {
       myInfo=newInfo  // we use RPSInfo to propagate new systemInfo and coordinates
       contactNodes(numberOfNodesToContact)
     }
-    case FirstContact(node) => rps =Seq(RPSInfo(node,null,null,1000000))// I don't know the system information here
+    case FirstContact(node) => rps = Seq(RPSInfo(node,null,1000000))// I don't know the system information here
     case NewRPS(newRPS) => rps = newRPS
     case _ => {
       log.info("Unknown message")
@@ -125,6 +124,7 @@ class Communication(vivaldiCore: ActorRef) extends Actor {
       }
       else {
         log.error("Can't figure out response type")
+        main ! DeleteCloseNode(info)
         null
       }
     }

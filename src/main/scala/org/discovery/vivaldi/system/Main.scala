@@ -40,7 +40,7 @@ class Main extends Actor {
 
   //Creating child actors
   val vivaldiCore = context.actorOf(Props(classOf[ComputingAlgorithm], self), "VivaldiCore")
-  val network = context.actorOf(Props(classOf[Communication], vivaldiCore), "Network")
+  val network = context.actorOf(Props(classOf[Communication], vivaldiCore, self), "Network")
 
   var coordinates: Coordinates = Coordinates(0,0)
   var closeNodes: Seq[CloseNodeInfo] = Seq()
@@ -57,7 +57,8 @@ class Main extends Actor {
     case NextNodesToSelf(excluded, numberOfNodes) => getCloseNodesToSelf(excluded, numberOfNodes)
     case NextNodesFrom(origin, excluded, numberOfNodes) => getCloseNodesFrom(origin, excluded, numberOfNodes)
     case UpdatedCoordinates(newCoordinates, rps) => updateCoordinates(newCoordinates, rps)
-    case _ => log.info("Unkown Message")
+    case DeleteCloseNode(toDelete) => deleteCloseNode(toDelete)
+    case _ => log.info("Unknown Message")
   }
 
   /**
@@ -98,7 +99,7 @@ class Main extends Actor {
 
     log.debug("Computing & updating distances")
     //Computing the distances from the RPS table
-    val RPSCloseNodes = rps.map(node => CloseNodeInfo(node.node, node.systemInfo, node.coordinates,computeDistanceToSelf(node.coordinates)))
+    val RPSCloseNodes = rps.map(node => CloseNodeInfo(node.node, node.coordinates,computeDistanceToSelf(node.coordinates)))
 
     //TODO Test contain with data and code the method equals for closeNodes
     //Retrieve nodes to update
@@ -137,11 +138,17 @@ class Main extends Actor {
     hypot(a.x-b.x,a.y-b.y)
   }
 
+  /**
+   * Methods that deletes a node from the close node list when a ping isn't correct.
+   * @param nodeToDelete to delete from the list
+   */
+  def deleteCloseNode(nodeToDelete: RPSInfo){
+    closeNodes = closeNodes.filterNot(_.node.path == nodeToDelete.node.path)
+  }
+
   def initSystem(){
 
   }
-
-  case class CountCalls();
 
   val firstCallTime = configInit.getInt("firstCallTime")
   val timeBetweenCallsFirst = configInit.getInt("timeBetweenCallsFirst")
@@ -149,16 +156,13 @@ class Main extends Actor {
   val numberOfNodesCalled = configInit.getInt("numberOfNodesCalled")
   val changeTime =  configInit.getInt("changeTime")
 
-  var numberOfCalls = 0
-
-  val myInfo = RPSInfo(null, null, coordinates, 0) // TODO Fix that
 
   /**
    *  First call made
   Used to init the system with a first node
    */
   val initScheduler = context.system.scheduler.scheduleOnce(firstCallTime seconds){
-     network ! FirstContact(null)
+     network ! FirstContact(self) // TODO Fix that
   }
 
   /**
@@ -168,9 +172,7 @@ class Main extends Actor {
   Calls made each timeBetweenCalls ms
    */
   val schedulerRPSFirst = context.system.scheduler.schedule(timeBetweenCallsFirst seconds, timeBetweenCallsFirst seconds){
-    log.debug("Scheduler for RPS request called")
-    log.debug(s"$numberOfNodesCalled nodes will be called")
-    network ! DoRPSRequest(myInfo, numberOfNodesCalled)
+    callNetwork()
   }
 
   val schedulerChangeFrequency = context.system.scheduler.scheduleOnce(changeTime seconds){
@@ -178,8 +180,13 @@ class Main extends Actor {
   }
 
   val schedulerRPSThen = context.system.scheduler.schedule(changeTime seconds, timeBetweenCallsThen seconds){
+     callNetwork()
+  }
+
+  def callNetwork() = {
     log.debug("Scheduler for RPS request called")
     log.debug(s"$numberOfNodesCalled nodes will be called")
+    val myInfo = RPSInfo(self, coordinates, 0)
     network ! DoRPSRequest(myInfo, numberOfNodesCalled)
   }
 
