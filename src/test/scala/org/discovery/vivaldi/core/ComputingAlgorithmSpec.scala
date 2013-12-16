@@ -34,10 +34,13 @@ class ComputingAlgorithmSpec extends TestKit(ActorSystem("testSystem")) with Wor
 
     val rpsOne = RPSInfo(mainActor.underlyingActor.network,Coordinates(3,-4),10)
     val rpsTwo = RPSInfo(mainActor.underlyingActor.network,Coordinates(-4.5,6),10)
-    val newRpsTable = Seq(rpsOne, rpsTwo)
+    val rpsTableOne = Seq(rpsOne, rpsTwo)
+    val rpsTableTwo = Seq(rpsOne, rpsTwo, rpsOne)
 
     val algorithmTestOne: TestActorRef[ComputingAlgorithm] = TestActorRef(Props(classOf[ComputingAlgorithm], mainActor), "TestCoreActorOne")
     val algorithmTestTwo: TestActorRef[ComputingAlgorithm] = TestActorRef(Props(classOf[ComputingAlgorithm], mainActor), "TestCoreActorTwo")
+    val algorithmTestThree: TestActorRef[ComputingAlgorithm] = TestActorRef(Props(classOf[ComputingAlgorithm], mainActor), "TestCoreActorThree")
+    val algorithmTestFour: TestActorRef[ComputingAlgorithm] = TestActorRef(Props(classOf[ComputingAlgorithm], mainActor), "TestCoreActorFour")
 
     "Find the direction towards which it will move its coordinates" in {
       val a = 3.0
@@ -72,8 +75,28 @@ class ComputingAlgorithmSpec extends TestKit(ActorSystem("testSystem")) with Wor
     "Compute its new vivaldi coordinates for multiple RPS info" in {
       // By default the coordinates of the actor is (0,0)
       assertResult(Coordinates(0, 0)){
-        algorithmTestTwo.underlyingActor.compute(newRpsTable)
+        algorithmTestTwo.underlyingActor.compute(rpsTableOne)
       }
+    }
+
+    "Compute its new vivaldi coordinates for multiple RPS info sent by message" in {
+      // By default the coordinates of the actor is (0,0)
+      assertResult(true){
+        algorithmTestThree.underlyingActor.receive(UpdatedRPS(rpsTableOne))
+        algorithmTestThree.underlyingActor.coordinates.equals(Coordinates(0, 0))
+      }
+      mainActor.underlyingActor.schedulerRPSFirst.cancel()
+      mainActor.underlyingActor.schedulerRPSThen.cancel()
+    }
+
+    "Send its new coordinates to the main actor" in {
+      // By default the coordinates of the actor is (0,0)
+      assertResult(true){
+        algorithmTestFour.underlyingActor.receive(UpdatedRPS(rpsTableTwo))
+        mainActor.underlyingActor.coordinates.equals(Coordinates(-1.5, 2))
+      }
+      mainActor.underlyingActor.schedulerRPSFirst.cancel()
+      mainActor.underlyingActor.schedulerRPSThen.cancel()
     }
   }
 }
