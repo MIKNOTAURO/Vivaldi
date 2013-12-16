@@ -43,10 +43,10 @@ object Communication {
   // Ping/Pong are used in the RPS update process, to measure ping and recover new RPSs
   case class Ping(sendTime: Long, selfInfo: RPSInfo)
 
-  case class Pong(sendTime: Long, selfInfo: RPSInfo, rps: Iterable[RPSInfo])
+  case class Pong(sendTime: Long, selfInfo: RPSInfo, rps: Set[RPSInfo])
 
   //NewRPS is used to update the RPS (in the "mix RPS" phase)
-  case class NewRPS(rps: Iterable[RPSInfo])
+  case class NewRPS(rps: Set[RPSInfo])
 
 }
 
@@ -54,7 +54,7 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef) extends Actor {
 
   val log = Logging(context.system, this)
 
-  var rps: Iterable[RPSInfo] = Seq[RPSInfo]()
+  var rps = Set[RPSInfo]()
 
   val rpsSize = 100 //TODO choose a number
 
@@ -72,25 +72,25 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef) extends Actor {
       myInfo = newInfo // we use RPSInfo to propagate new systemInfo and coordinates
       contactNodes(numberOfNodesToContact)
     }
-    case FirstContact(node) => rps = Seq(RPSInfo(node, Coordinates(0, 0), 1000000)) // I don't know the system information here
+    case FirstContact(node) => rps = Set(RPSInfo(node, Coordinates(0, 0), 1000000)) // I don't know the system information here
     case NewRPS(newRPS) => rps = newRPS
     case unknownMessage => {
-      log.info("Unknown message ",unknownMessage)
+      log.info("Unknown message "+unknownMessage)
     }
   }
 
   def receivePing(ping: Ping) {
     //size check is necessary to make sure our rps grows at one point (this will make our rps initially very self-biased.
-    log.debug("Recieved ping from :", ping)
-    rps = Random.shuffle(ping.selfInfo +: (if (rps.size == rpsSize) rps.tail else rps).toSeq)
+    log.debug("Recieved ping from :"+ ping)
+    rps = Random.shuffle((if (rps.size == rpsSize) rps.tail else rps) + ping.selfInfo)
     sender ! Pong(ping.sendTime, myInfo, rps)
   }
 
-  def mixRPS(rpsList: Iterable[Pong]): Iterable[RPSInfo] = {
-    val rpses = rpsList.toList.flatMap {
+  def mixRPS(rpsList: Set[Pong]): Set[RPSInfo] = {
+    val rpses = rpsList.flatMap {
       _.rps
     }
-    Random.shuffle(rpses:::(rps.toList)).take(rpsSize)
+    Random.shuffle(rpses ++ rps).take(rpsSize)
   }
 
   def contactNodes(numberOfNodesToContact: Int) {
@@ -98,7 +98,7 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef) extends Actor {
     val toContact = rps.take(Math.min(rps.size, numberOfNodesToContact))
     val asks = toContact map askPing
 
-    val updatedAsks: Iterable[Future[Pong]] = asks.map {
+    val updatedAsks: Set[Future[Pong]] = asks.map {
       ask =>
         for {
           result <- ask
@@ -115,13 +115,13 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef) extends Actor {
     val allAsks = Future sequence updatedAsks
 
     allAsks onComplete {
-      case Success(newInfos: Iterable[Pong]) => {
+      case Success(newInfos: Set[Pong]) => {
         log.debug("Finished pinging, going to mix")
         val newRPS = newInfos.map(_.selfInfo)
         vivaldiCore ! UpdatedRPS(newRPS)
         rps = mixRPS(newInfos)
       }
-      case x => log.error("RPS request failed! ",x)
+      case x => log.error("RPS request failed! "+x)
     }
   }
 
@@ -136,7 +136,7 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef) extends Actor {
         }
         else {
 
-          log.error("Can't figure out response type " , result.toString)
+          log.error("Can't figure out response type " + result.toString)
           main ! DeleteCloseNode(info)
           null
         }

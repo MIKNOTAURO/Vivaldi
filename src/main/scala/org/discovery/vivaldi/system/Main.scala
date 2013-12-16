@@ -14,6 +14,7 @@ import org.discovery.vivaldi.dto.DoRPSRequest
 import org.discovery.vivaldi.dto.CloseNodeInfo
 import org.discovery.vivaldi.dto.RPSInfo
 import org.discovery.vivaldi.dto.UpdatedCoordinates
+import org.discovery.vivaldi.network.Communication.Ping
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -58,7 +59,8 @@ class Main extends Actor {
     case NextNodesFrom(origin, excluded, numberOfNodes) => getCloseNodesFrom(origin, excluded, numberOfNodes)
     case UpdatedCoordinates(newCoordinates, rps) => updateCoordinates(newCoordinates, rps)
     case DeleteCloseNode(toDelete) => deleteCloseNode(toDelete)
-    case unknownMessage => log.info("Unkown Message ",unknownMessage)
+    case p: Ping => network forward p
+    case unknownMessage => log.info("Unkown Message "+unknownMessage)
   }
 
   /**
