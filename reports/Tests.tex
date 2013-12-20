@@ -1,0 +1,90 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[francais]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{listings}
+\usepackage{graphicx}
+
+
+% "define" Scala
+\lstdefinelanguage{scala}{
+  morekeywords={abstract,case,catch,class,def,%
+    do,else,extends,false,final,finally,%
+    for,if,implicit,import,match,mixin,%
+    new,null,object,override,package,%
+    private,protected,requires,return,sealed,%
+    super,this,throw,trait,true,try,%
+    type,val,var,while,with,yield},
+  otherkeywords={=>,<-,<\%,<:,>:,\#,@},
+  sensitive=true,
+  morecomment=[l]{//},
+  morecomment=[n]{/*}{*/},
+  morestring=[b]",
+  morestring=[b]',
+  morestring=[b]"""
+}
+
+
+\usepackage{color}
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+ 
+% Default settings for code listings
+\lstset{frame=tb,
+  language=scala,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=left,
+  numberstyle=\tiny\color{black},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  frame=single,
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+
+\title{Projet d'option GSI Vivaldi \\ Cahier de tests}
+\author{Nicolas Joseph, Raphaël Gaschignard\\ Guillaume Blondeau, Cyprien Quilici, Jacob Tardieu}
+
+\begin{document}
+\maketitle
+
+\section{Tests internes \hfill 29/12/2013}
+\begin{itemize}
+\item Les tests internes aux classes  \hfill \textbf{Faits}
+\item Les tests de communication entre les acteurs \hfill \textbf{29/12/2013}
+\end{itemize}
+
+\section{Tests Externes}
+\subsection{En Local \hfill \textbf{12/01/2014}}
+
+\begin{itemize}
+\item Tester l’initialisation du système
+\item Tester la cartographie des noeuds qui résulte d’un mapping de ping prédéfini
+\item Tester la résilience aux pannes du système
+\begin{itemize}
+\item Ajout de noeud dans le maillage
+\item Retrait de noeud dans le maillage
+\end{itemize}
+\item Optimiser les constantes pour accélérer la convergence des coordonnées tout en les gardant stables
+\end{itemize}
+
+\subsection{Sur Grid5000  \hfill \textbf{26/01/2014}}
+\begin{itemize}
+\item Tester l’initialisation du système
+\item Tester la cartographie des noeuds qui résulte d’un mapping de ping prédéfini
+\end{itemize}
+
+\section{Monitoring \hfill 5/01/2014}
+Pendant les vacances sera développé une petite application pour faire du monitoring des différents noeuds. Nous allons partir d'un service WEB REST pour aggreger les données des différents noeuds. Nous lui assocerons ensuite un client légé, écrit en Javascript avec DartJS et Angular.
+
+\end{document}
