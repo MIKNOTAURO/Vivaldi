@@ -56,7 +56,7 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef) extends Actor {
 
   var rps = Set[RPSInfo]()
 
-  val rpsSize = 100 //TODO choose a number
+  val rpsSize = context.system.settings.config.getConfig("vivaldi.system").getInt("communication.rpssize")
 
   //used when getting rps info
   implicit val pingTimeout = Timeout(5 seconds)
