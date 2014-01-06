@@ -12,7 +12,7 @@ import org.scalatest.{WordSpecLike, MustMatchers}
  * To change this template use File | Settings | File Templates.
  */
 class LocalSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with MustMatchers{
-  "An actor system " must {
+  /*"An actor system " must {
     
-  }
+  }*/
 }

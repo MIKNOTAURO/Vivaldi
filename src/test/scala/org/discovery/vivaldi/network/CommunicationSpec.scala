@@ -30,7 +30,7 @@ import org.discovery.vivaldi.dto.{Coordinates, RPSInfo}
 
 class CommunicationSpec extends TestKit(ActorSystem("testSystem")) with ImplicitSender with WordSpecLike with MustMatchers {
   "The network block " must {
-      val actor = TestActorRef[Main]
+      val actor = TestActorRef(new Main("testMain"))
       val com   = TestActorRef[Communication](new Communication(actor.underlyingActor.vivaldiCore,actor))
 
       "put pingers into RPS" in {

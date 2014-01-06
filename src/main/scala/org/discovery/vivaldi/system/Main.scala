@@ -35,7 +35,7 @@ import org.discovery.vivaldi.network.Communication.Ping
  * limitations under the License.
  * ============================================================ */
 
-class Main extends Actor {
+class Main(name : String) extends Actor {
 
   val log = Logging(context.system, this)
 
