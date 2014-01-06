@@ -60,6 +60,7 @@ class Main extends Actor {
     case UpdatedCoordinates(newCoordinates, rps) => updateCoordinates(newCoordinates, rps)
     case DeleteCloseNode(toDelete) => deleteCloseNode(toDelete)
     case p: Ping => network forward p
+    case FirstContact(node) => network ! FirstContact(this.network)
     case unknownMessage => log.info("Unkown Message "+unknownMessage)
   }
 
@@ -163,14 +164,6 @@ class Main extends Actor {
   var numberOfCalls = 0
 
   val myInfo = RPSInfo(this.network, coordinates, 1067) // TODO Fix that
-
-  /**
-   *  First call made
-  Used to init the system with a first node
-   */
-  val initScheduler = context.system.scheduler.scheduleOnce(firstCallTime seconds){
-     network ! FirstContact(this.network)
-  }
 
   /**
    *  Creates a scheduler
