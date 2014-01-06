@@ -37,10 +37,10 @@ class ComputingAlgorithmSpec extends TestKit(ActorSystem("testSystem")) with Wor
     val rpsTableOne = Seq(rpsOne, rpsTwo)
     val rpsTableTwo = Seq(rpsOne, rpsTwo, rpsOne)
 
-    val algorithmTestOne: TestActorRef[ComputingAlgorithm] = TestActorRef(Props(classOf[ComputingAlgorithm], mainActor), "TestCoreActorOne")
-    val algorithmTestTwo: TestActorRef[ComputingAlgorithm] = TestActorRef(Props(classOf[ComputingAlgorithm], mainActor), "TestCoreActorTwo")
-    val algorithmTestThree: TestActorRef[ComputingAlgorithm] = TestActorRef(Props(classOf[ComputingAlgorithm], mainActor), "TestCoreActorThree")
-    val algorithmTestFour: TestActorRef[ComputingAlgorithm] = TestActorRef(Props(classOf[ComputingAlgorithm], mainActor), "TestCoreActorFour")
+    val algorithmTestOne: TestActorRef[ComputingAlgorithm] = TestActorRef(Props(classOf[ComputingAlgorithm], mainActor, 0.5), "TestCoreActorOne")
+    val algorithmTestTwo: TestActorRef[ComputingAlgorithm] = TestActorRef(Props(classOf[ComputingAlgorithm], mainActor, 0.5), "TestCoreActorTwo")
+    val algorithmTestThree: TestActorRef[ComputingAlgorithm] = TestActorRef(Props(classOf[ComputingAlgorithm], mainActor, 0.5), "TestCoreActorThree")
+    val algorithmTestFour: TestActorRef[ComputingAlgorithm] = TestActorRef(Props(classOf[ComputingAlgorithm], mainActor, 0.5), "TestCoreActorFour")
 
     "Find the direction towards which it will move its coordinates" in {
       val a = 3.0

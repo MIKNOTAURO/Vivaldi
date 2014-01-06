@@ -28,9 +28,10 @@ import scala.util.Random
  * limitations under the License.
  * ============================================================ */
 
- class ComputingAlgorithm(system: ActorRef) extends Actor {
+ class ComputingAlgorithm(system: ActorRef, deltaConf: Double) extends Actor {
 
    val log = Logging(context.system, this)
+   val delta = deltaConf
    var coordinates = Coordinates(0, 0)
 
    def receive = {
@@ -52,9 +53,6 @@ import scala.util.Random
    }
 
    def computeOne(oneRps: RPSInfo): Coordinates = {
-
-     val delta = 0.5
-     //TODO see what value we assign to delta
 
      // Compute error of this sample. (1)
      val diffX = coordinates.x - oneRps.coordinates.x

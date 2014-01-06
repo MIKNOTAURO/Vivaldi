@@ -39,7 +39,8 @@ class Main extends Actor {
   val log = Logging(context.system, this)
 
   //Creating child actors
-  val vivaldiCore = context.actorOf(Props(classOf[ComputingAlgorithm], self), "VivaldiCore")
+  val deltaConf = context.system.settings.config.getDouble("vivaldi.system.vivaldi.delta")
+  val vivaldiCore = context.actorOf(Props(classOf[ComputingAlgorithm], self, deltaConf), "VivaldiCore")
   val network = context.actorOf(Props(classOf[Communication], vivaldiCore, self), "Network")
 
   var coordinates: Coordinates = Coordinates(0,0)
