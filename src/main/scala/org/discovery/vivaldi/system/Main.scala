@@ -61,7 +61,7 @@ class Main(name : String,id:Int) extends Actor {
     case UpdatedCoordinates(newCoordinates, rps) => updateCoordinates(newCoordinates, rps)
     case DeleteCloseNode(toDelete) => deleteCloseNode(toDelete)
     case p: Ping => network forward p
-    case FirstContact(node) => network ! FirstContact(this.network)
+    case f: FirstContact => network forward f
     case unknownMessage => log.info("Unkown Message "+unknownMessage)
   }
 
@@ -98,7 +98,7 @@ class Main(name : String,id:Int) extends Actor {
 
     val rps = rpsIterable.toSeq
 
-    log.debug(s"New coordinated received: $newCoordinates")
+    log.debug(s"New coordinated received for node $id: $newCoordinates")
     coordinates = newCoordinates
 
     log.debug("Computing & updating distances")
@@ -164,7 +164,7 @@ class Main(name : String,id:Int) extends Actor {
 
   var numberOfCalls = 0
 
-  val myInfo = RPSInfo(this.network, coordinates, 1067) // TODO Fix that
+  val myInfo = RPSInfo(this.network, coordinates, 1067, this.id) // TODO Fix that
 
   /**
    *  Creates a scheduler
@@ -187,7 +187,7 @@ class Main(name : String,id:Int) extends Actor {
   def callNetwork() = {
     log.debug("Scheduler for RPS request called")
     log.debug(s"$numberOfNodesCalled nodes will be called")
-    val myInfo = RPSInfo(self, coordinates, 0)
+    val myInfo = RPSInfo(self, coordinates, 0, this.id)
     network ! DoRPSRequest(myInfo, numberOfNodesCalled)
   }
 

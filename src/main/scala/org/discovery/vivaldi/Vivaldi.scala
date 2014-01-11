@@ -34,6 +34,7 @@ object Vivaldi {
     val system = akkaSystem.actorOf(Props(classOf[Main], "main", 0), "System")
 
     log.info("coucous")
+
   }
 
 }
