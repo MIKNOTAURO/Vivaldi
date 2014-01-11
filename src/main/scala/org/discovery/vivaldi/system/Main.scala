@@ -35,14 +35,14 @@ import org.discovery.vivaldi.network.Communication.Ping
  * limitations under the License.
  * ============================================================ */
 
-class Main(name : String) extends Actor {
+class Main(name : String,id:Int) extends Actor {
 
   val log = Logging(context.system, this)
 
   //Creating child actors
   val deltaConf = context.system.settings.config.getDouble("vivaldi.system.vivaldi.delta")
   val vivaldiCore = context.actorOf(Props(classOf[ComputingAlgorithm], self, deltaConf), "VivaldiCore")
-  val network = context.actorOf(Props(classOf[Communication], vivaldiCore, self), "Network")
+  val network = context.actorOf(Props(classOf[Communication], vivaldiCore, self, 0), "Network")
 
   var coordinates: Coordinates = Coordinates(0,0)
   var closeNodes: Seq[CloseNodeInfo] = Seq()

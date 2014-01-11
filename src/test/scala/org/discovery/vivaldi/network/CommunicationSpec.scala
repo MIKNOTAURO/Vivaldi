@@ -30,13 +30,13 @@ import org.discovery.vivaldi.dto.{Coordinates, RPSInfo}
 
 class CommunicationSpec extends TestKit(ActorSystem("testSystem")) with ImplicitSender with WordSpecLike with MustMatchers {
   "The network block " must {
-      val actor = TestActorRef(new Main("testMain"))
-      val com   = TestActorRef[Communication](new Communication(actor.underlyingActor.vivaldiCore,actor))
+      val actor = TestActorRef(new Main("testMain", 0))
+      val com   = TestActorRef[Communication](new Communication(actor.underlyingActor.vivaldiCore,actor, 0))
 
       "put pingers into RPS" in {
         com.receive(Ping(System.currentTimeMillis(),RPSInfo(self,Coordinates(0,0),12)),self)
         expectMsgClass(Pong(0,null,null).getClass)
-        com.underlyingActor.rps.exists { case RPSInfo(id,x,y) => id == self }
+        com.underlyingActor.rps.exists { case RPSInfo(node,x,y,id) => node == self }
       }
 
       "have an increasing RPS initially " in {

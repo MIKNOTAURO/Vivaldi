@@ -2,7 +2,9 @@ package org.discovery.vivaldi.local
 
 import org.discovery.vivaldi.network.Communication
 import akka.actor.ActorRef
-import org.discovery.vivaldi.dto.Coordinates
+import org.discovery.vivaldi.dto.{RPSInfo, Coordinates}
+import org.discovery.vivaldi.network.Communication.Ping
+
 
 /**
  * Created with IntelliJ IDEA.
@@ -15,21 +17,25 @@ import org.discovery.vivaldi.dto.Coordinates
 object FakePing {
   var pingTable : Array[Array[Long]] = Array()
 
-  def createTable(coordinates:Seq[Coordinates]):Array[Array[Long]] = {
-    null //TODO fix
-  }
+  def createTable(coordinates:Seq[Coordinates]):Array[Array[Long]] =
+    (for( coord1 <- coordinates)
+      yield (for (coord2 <- coordinates)
+        yield math.hypot(coord2.x-coord1.x,coord2.y-coord1.y).toLong).toArray).toArray
+
 
   def initActorSystem(coordinates:Seq[Coordinates]):Seq[ActorRef] = {
-    null //TODO fix
+    createTable(coordinates)
+    coordinates.zip(0 until coordinates.length).map({case (coord,id) => null.asInstanceOf[ActorRef] })//TODO
   }
 
 }
 
 
-class FakePing(core:ActorRef,main:ActorRef) extends Communication(core,main) {
-     override def receive = {
-       case _ => super.receive //TODO check that this works
+class FakePing(core:ActorRef,main:ActorRef,id:Integer) extends Communication(core,main,id) {
+     override def calculatePing(sendTime:Long,otherInfo:RPSInfo):Long={
+       FakePing.pingTable(this.id)(otherInfo.id)
      }
 }
+
 
 
