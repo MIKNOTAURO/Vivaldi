@@ -62,7 +62,7 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef,id:Int) extends Actor 
   implicit val pingTimeout = Timeout(5 seconds)
 
   //TODO set systemInfo
-  var myInfo: RPSInfo = RPSInfo(self, Coordinates(0, 0), 23) //the ping in myInfo isn't used , so using as a "source" id
+  var myInfo: RPSInfo = RPSInfo(self, Coordinates(0, 0), 23, this.id) //the ping in myInfo isn't used , so using as a "source" id
 
 
   def receive = {
@@ -72,7 +72,7 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef,id:Int) extends Actor 
       myInfo = newInfo // we use RPSInfo to propagate new systemInfo and coordinates
       contactNodes(numberOfNodesToContact)
     }
-    case FirstContact(node) => rps = Set(RPSInfo(node, Coordinates(0, 0), 1000000)) // I don't know the system information here
+    case FirstContact(node) => rps = Set(RPSInfo(node, Coordinates(0, 0), 1000000, this.id)) // I don't know the system information here
     case NewRPS(newRPS) => rps = newRPS
     case unknownMessage => {
       log.info("Unknown message "+unknownMessage)

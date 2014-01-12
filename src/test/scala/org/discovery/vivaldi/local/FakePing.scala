@@ -52,7 +52,7 @@ class FakePing(core:ActorRef,main:ActorRef,id:Integer) extends Communication(cor
 class FakeMain(name : String, id : Int) extends Main(name, id) {
 
   override val vivaldiCore = context.actorOf(Props(classOf[ComputingAlgorithm], self, deltaConf), "VivaldiCore"+id)
-  override val network = context.actorOf(Props(classOf[FakePing], vivaldiCore, self, 0), "Network"+id)
+  override val network = context.actorOf(Props(classOf[FakePing], vivaldiCore, self, id), "Network"+id)
 
 }
 
