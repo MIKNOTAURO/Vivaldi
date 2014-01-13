@@ -35,7 +35,7 @@ trait nodeInfo {
  * @param coordinates
  * @param ping
  */
-case class RPSInfo(node: ActorRef,  coordinates: Coordinates, ping: Long) extends nodeInfo
+case class RPSInfo(node: ActorRef,  coordinates: Coordinates, ping: Long, id : Int = 0) extends nodeInfo
 
 /**
  * Class containing the information about a node and its distance from the current node.
@@ -59,6 +59,10 @@ case class Coordinates(x: Double, y: Double) {
 
   def add(that: Coordinates): Coordinates = {
     Coordinates(this.x + that.x, this.y + that.y)
+  }
+
+  def length(): Double = {
+    Math.sqrt(Math.pow(this.x, 2) + Math.pow(this.y, 2))
   }
 
   override def equals(obj: Any) = obj match {

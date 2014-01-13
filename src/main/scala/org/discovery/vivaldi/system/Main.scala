@@ -35,13 +35,14 @@ import org.discovery.vivaldi.network.Communication.Ping
  * limitations under the License.
  * ============================================================ */
 
-class Main extends Actor {
+class Main(name : String,id:Int) extends Actor {
 
   val log = Logging(context.system, this)
 
   //Creating child actors
-  val vivaldiCore = context.actorOf(Props(classOf[ComputingAlgorithm], self), "VivaldiCore")
-  val network = context.actorOf(Props(classOf[Communication], vivaldiCore, self), "Network")
+  val deltaConf = context.system.settings.config.getDouble("vivaldi.system.vivaldi.delta")
+  val vivaldiCore = context.actorOf(Props(classOf[ComputingAlgorithm], self, deltaConf), "VivaldiCore")
+  val network = context.actorOf(Props(classOf[Communication], vivaldiCore, self, 0), "Network")
 
   var coordinates: Coordinates = Coordinates(0,0)
   var closeNodes: Seq[CloseNodeInfo] = Seq()
@@ -162,15 +163,7 @@ class Main extends Actor {
 
   var numberOfCalls = 0
 
-  val myInfo = RPSInfo(this.network, coordinates, 1067) // TODO Fix that
-
-  /**
-   *  First call made
-  Used to init the system with a first node
-   */
-  val initScheduler = context.system.scheduler.scheduleOnce(firstCallTime seconds){
-     network ! FirstContact(this.network)
-  }
+  val myInfo = RPSInfo(this.network, coordinates, 1067, this.id) // TODO Fix that
 
   /**
    *  Creates a scheduler

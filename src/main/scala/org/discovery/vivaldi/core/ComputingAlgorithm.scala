@@ -28,9 +28,10 @@ import scala.util.Random
  * limitations under the License.
  * ============================================================ */
 
- class ComputingAlgorithm(system: ActorRef) extends Actor {
+ class ComputingAlgorithm(system: ActorRef, deltaConf: Double) extends Actor {
 
    val log = Logging(context.system, this)
+   val delta = deltaConf
    var coordinates = Coordinates(0, 0)
 
    def receive = {
@@ -38,7 +39,7 @@ import scala.util.Random
      case _ => log.info("Message Inconnu")
    }
 
-   def compute(rps: Iterable[RPSInfo]) {
+   def compute(rps: Iterable[RPSInfo]): Coordinates = {
      //log.debug(s"Received RPS $rps")
      //Vivaldi algorithm
      for (oneRps <- rps) {
@@ -48,6 +49,7 @@ import scala.util.Random
      //log.debug(s"New coordinates computed: $coordinates")
      //log.debug("Sending coordinates to the system actor")
      system ! UpdatedCoordinates(coordinates, rps) //Envoi des coordonnées calculées à la brique Système
+     coordinates
    }
 
    def computeOne(oneRps: RPSInfo): Coordinates = {
@@ -75,7 +77,8 @@ import scala.util.Random
        val hyp = hypot(abs, ord)
        Coordinates(abs/hyp, ord/hyp)
      } else {
-       Coordinates(math.abs(diffX)/diffX, math.abs(diffY)/diffY)
+       val hyp = hypot(diffX, diffY)
+       Coordinates(diffX/hyp, diffY/hyp)
      }
    }
 

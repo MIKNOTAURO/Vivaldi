@@ -43,14 +43,14 @@ object Communication {
   // Ping/Pong are used in the RPS update process, to measure ping and recover new RPSs
   case class Ping(sendTime: Long, selfInfo: RPSInfo)
 
-  case class Pong(sendTime: Long, selfInfo: RPSInfo, rps: Set[RPSInfo])
+  case class Pong(sendTime: Long, selfInfo: RPSInfo,  rps: Set[RPSInfo])
 
   //NewRPS is used to update the RPS (in the "mix RPS" phase)
   case class NewRPS(rps: Set[RPSInfo])
 
 }
 
-class Communication(vivaldiCore: ActorRef, main: ActorRef) extends Actor {
+class Communication(vivaldiCore: ActorRef, main: ActorRef,id:Int) extends Actor {
 
   val log = Logging(context.system, this)
 
@@ -62,7 +62,7 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef) extends Actor {
   implicit val pingTimeout = Timeout(5 seconds)
 
   //TODO set systemInfo
-  var myInfo: RPSInfo = RPSInfo(self, Coordinates(0, 0), 23) //the ping in myInfo isn't used , so using as a "source" id
+  var myInfo: RPSInfo = RPSInfo(self, Coordinates(0, 0), 23, this.id) //the ping in myInfo isn't used , so using as a "source" id
 
 
   def receive = {
@@ -72,7 +72,7 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef) extends Actor {
       myInfo = newInfo // we use RPSInfo to propagate new systemInfo and coordinates
       contactNodes(numberOfNodesToContact)
     }
-    case FirstContact(node) => rps = Set(RPSInfo(node, Coordinates(0, 0), 1000000)) // I don't know the system information here
+    case FirstContact(node) => rps = Set(RPSInfo(node, Coordinates(0, 0), 1000000, this.id)) // I don't know the system information here
     case NewRPS(newRPS) => rps = newRPS
     case unknownMessage => {
       log.error("Unknown message:"+unknownMessage)
@@ -93,6 +93,11 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef) extends Actor {
     Random.shuffle(rpses ++ rps).take(rpsSize)
   }
 
+  //overwridden in fakeping class
+  def calculatePing(sendTime:Long,otherInfo:RPSInfo):Long = {
+    System.currentTimeMillis()-sendTime
+  }
+
   def contactNodes(numberOfNodesToContact: Int) {
     //log.debug(s"Order to contact $numberOfNodesToContact received")
     val toContact = rps.take(Math.min(rps.size, numberOfNodesToContact))
@@ -103,12 +108,12 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef) extends Actor {
         for {
           result <- ask
           if result != null
-          Pong(sendTime, selfInfo, otherRPS) = result
+          Pong(sendTime, otherInfo, otherRPS) = result
         //if selfInfo != null
         } yield {
-          val pingTime = System.currentTimeMillis() - sendTime
-          val newSelfInfo = selfInfo.copy(ping = pingTime)
-          result.copy(selfInfo = newSelfInfo)
+          val pingTime = calculatePing(sendTime,otherInfo)
+          val newOtherInfo = otherInfo.copy(ping = pingTime)
+          result.copy(selfInfo = newOtherInfo) //update info of ping'd guy
         }
     }
 

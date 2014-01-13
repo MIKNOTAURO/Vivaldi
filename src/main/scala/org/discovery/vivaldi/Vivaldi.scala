@@ -29,12 +29,12 @@ object Vivaldi {
 
   def main(args: Array[String]) = {
 
-
     val akkaSystem = ActorSystem("Vivaldi")
 
-    val system = akkaSystem.actorOf(Props[Main], "System")
+    val system = akkaSystem.actorOf(Props(classOf[Main], "main", 0), "System")
 
     log.info("coucous")
+
   }
 
 }

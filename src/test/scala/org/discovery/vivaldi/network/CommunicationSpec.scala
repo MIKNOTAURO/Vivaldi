@@ -30,9 +30,7 @@ import akka.event.Logging
 
 
 class CommunicationSpec extends TestKit(ActorSystem("testSystem")) with ImplicitSender with WordSpecLike with MustMatchers {
-
   "The network block " must {
-
       val actor = TestActorRef[Main]
       val com   = TestActorRef[Communication](new Communication(actor.underlyingActor.vivaldiCore,actor))
       val PONG  = Pong(0,null,null).getClass
