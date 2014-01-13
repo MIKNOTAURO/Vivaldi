@@ -39,14 +39,14 @@ import scala.util.Random
    }
 
    def compute(rps: Iterable[RPSInfo]) {
-     log.debug(s"Received RPS $rps")
+     //log.debug(s"Received RPS $rps")
      //Vivaldi algorithm
      for (oneRps <- rps) {
        coordinates = coordinates.add(computeOne(oneRps))
      }
 
-     log.debug(s"New coordinates computed: $coordinates")
-     log.debug("Sending coordinates to the system actor")
+     //log.debug(s"New coordinates computed: $coordinates")
+     //log.debug("Sending coordinates to the system actor")
      system ! UpdatedCoordinates(coordinates, rps) //Envoi des coordonnées calculées à la brique Système
    }
 

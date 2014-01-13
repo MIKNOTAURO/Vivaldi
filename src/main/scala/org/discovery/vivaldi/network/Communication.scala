@@ -75,13 +75,13 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef) extends Actor {
     case FirstContact(node) => rps = Set(RPSInfo(node, Coordinates(0, 0), 1000000)) // I don't know the system information here
     case NewRPS(newRPS) => rps = newRPS
     case unknownMessage => {
-      log.info("Unknown message "+unknownMessage)
+      log.error("Unknown message:"+unknownMessage)
     }
   }
 
   def receivePing(ping: Ping) {
     //size check is necessary to make sure our rps grows at one point (this will make our rps initially very self-biased.
-    log.debug("Received ping from :"+ ping)
+    //log.debug("Received ping from :"+ ping)
     rps = Random.shuffle(rps + ping.selfInfo).take(rpsSize)
     sender ! Pong(ping.sendTime, myInfo, rps)
   }
@@ -94,7 +94,7 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef) extends Actor {
   }
 
   def contactNodes(numberOfNodesToContact: Int) {
-    log.debug(s"Order to contact $numberOfNodesToContact received")
+    //log.debug(s"Order to contact $numberOfNodesToContact received")
     val toContact = rps.take(Math.min(rps.size, numberOfNodesToContact))
     val asks = toContact map askPing
 
@@ -116,7 +116,7 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef) extends Actor {
 
     allAsks onComplete {
       case Success(newInfos: Set[Pong]) => {
-        log.debug("Finished pinging, going to mix")
+        //log.debug("Finished pinging, going to mix")
         val newRPS = newInfos.map(_.selfInfo)
         vivaldiCore ! UpdatedRPS(newRPS)
         rps = mixRPS(newInfos)

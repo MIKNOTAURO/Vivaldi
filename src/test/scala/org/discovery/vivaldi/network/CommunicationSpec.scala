@@ -7,6 +7,7 @@ import org.scalatest.{MustMatchers, WordSpecLike}
 import org.discovery.vivaldi.network.Communication._
 import org.discovery.vivaldi.system.Main
 import org.discovery.vivaldi.dto.{Coordinates, RPSInfo}
+import akka.event.Logging
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -29,18 +30,24 @@ import org.discovery.vivaldi.dto.{Coordinates, RPSInfo}
 
 
 class CommunicationSpec extends TestKit(ActorSystem("testSystem")) with ImplicitSender with WordSpecLike with MustMatchers {
+
   "The network block " must {
+
       val actor = TestActorRef[Main]
       val com   = TestActorRef[Communication](new Communication(actor.underlyingActor.vivaldiCore,actor))
-
+      val PONG  = Pong(0,null,null).getClass
       "put pingers into RPS" in {
         com.receive(Ping(System.currentTimeMillis(),RPSInfo(self,Coordinates(0,0),12)),self)
-        expectMsgClass(Pong(0,null,null).getClass)
-        com.underlyingActor.rps.exists { case RPSInfo(id,x,y) => id == self }
+        expectMsgClass(PONG)
+        println(com.underlyingActor.rps)
+        assert(com.underlyingActor.rps.exists { case RPSInfo(id,x,y) => id == self })
       }
 
       "have an increasing RPS initially " in {
-              //TODO write
+        val com1 = TestActorRef[Communication](new Communication(actor.underlyingActor.vivaldiCore,actor))
+        val com2 = TestActorRef[Communication](new Communication(actor.underlyingActor.vivaldiCore,actor))
+        com1.receive(Ping(System.currentTimeMillis(),RPSInfo(com2,Coordinates(10,10),17)),com2)
+        assert(com1.underlyingActor.rps.size>1)
       }
   }
 }
