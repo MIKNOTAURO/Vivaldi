@@ -15,7 +15,7 @@ import org.discovery.vivaldi.dto.{FirstContact, Coordinates}
 class LocalSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with MustMatchers{
   "An actor system " must {
     "work" in {
-      val coordinates : Seq[Coordinates] = List(new Coordinates(0,1),new Coordinates(1,0), new Coordinates(0,0), new Coordinates(0,0))
+      val coordinates : Seq[Coordinates] = List(new Coordinates(0,1),new Coordinates(1,0), new Coordinates(0,0), new Coordinates(1,1))
       val actorRefs = FakePing.initActorSystem(coordinates)
       FakePing.createLinks(actorRefs)
     }
