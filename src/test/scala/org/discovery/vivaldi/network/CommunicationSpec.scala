@@ -46,8 +46,8 @@ class CommunicationSpec extends TestKit(ActorSystem("testSystem")) with Implicit
       "have an increasing RPS initially " in {
         val com1 = TestActorRef[Communication](new Communication(actor.underlyingActor.vivaldiCore,actor))
         val com2 = TestActorRef[Communication](new Communication(actor.underlyingActor.vivaldiCore,actor))
-        com1.receive(Ping(System.currentTimeMillis(),RPSInfo(com2,Coordinates(10,10),17)),com2)
-        assert(com1.underlyingActor.rps.size>1)
+        com2.receive(Ping(System.currentTimeMillis(),RPSInfo(com1,Coordinates(10,10),17)),com1)
+        assert(com2.underlyingActor.rps.size>1)
       }
   }
 }
