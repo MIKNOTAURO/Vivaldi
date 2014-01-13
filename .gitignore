@@ -18,6 +18,8 @@ dist
 \#*
 .\#*
 
+#leftover from git merging
+*.orig
 # LaTeX gitignore
 *.acn
 *.acr
