@@ -34,7 +34,7 @@ object FakePing {
   def initActorSystem(coordinates:Seq[Coordinates]):Seq[ActorRef] = {
     pingTable = createTable(coordinates)
     val system = ActorSystem("testSystem")
-    val myRequest = url("http://vivaldi-monitoring-demo.herokuapp.com/networks/").POST << """{"networkName": "localTest"}""" <:< Map("content-type" -> "application/json")
+    val myRequest = url("http://vivaldi-monitoring-demo.herokuapp.com/networks/").POST << """{"networkName": "localTest4"}""" <:< Map("content-type" -> "application/json")
     val result = Http(myRequest OK as.String).either
     var response = ""
     result() match {
@@ -48,8 +48,28 @@ object FakePing {
     log.info(idNetwork.toString)
     coordinates.zip(0 until coordinates.length).map({
       case (coordinate,id) => {
-        system.actorOf(Props(classOf[FakeMain], id.toString, id))
+        val requestRegister = url("http://vivaldi-monitoring-demo.herokuapp.com/nodes/").POST << s"""{"nodeName": "$id", "networkId": $idNetwork}""" <:< Map("content-type" -> "application/json")
+        val resultRegister = Http(requestRegister OK as.String).either
+        var responseRegister = ""
+        resultRegister() match {
+          case Right(content)         => responseRegister = content
+          case Left(StatusCode(404))  => log.error("Not found")
+          case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
+          case _ => log.error("Error")
+        }
+        val idNode = JSON.parseFull(responseRegister).get.asInstanceOf[Map[String, Any]]
+          .get("id").get.asInstanceOf[Double].toInt
 
+        val requestInit = url("http://vivaldi-monitoring-demo.herokuapp.com/initTimes/").POST << s"""{"nodeId": $idNode}""" <:< Map("content-type" -> "application/json")
+        val resultInit = Http(requestInit OK as.String).either
+        var responseInit = ""
+        resultInit() match {
+          case Right(content)         => responseInit = content
+          case Left(StatusCode(404))  => log.error("Not found")
+          case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
+          case _ => log.error("Error")
+        }
+        system.actorOf(Props(classOf[FakeMain], id.toString, id))
       }
     })
   }
