@@ -5,6 +5,11 @@ import org.discovery.vivaldi.dto.{FirstContact, RPSInfo, Coordinates}
 import org.discovery.vivaldi.system.Main
 import org.discovery.vivaldi.core.ComputingAlgorithm
 import org.discovery.vivaldi.network.Communication
+import dispatch._
+import scala.concurrent.{ExecutionContext}
+import ExecutionContext.Implicits.global
+import akka.event.slf4j.Logger
+import scala.util.parsing.json.JSON
 
 
 /**
@@ -17,8 +22,9 @@ import org.discovery.vivaldi.network.Communication
 
 object FakePing {
 
+  val log = Logger("Primary")
   var pingTable : Array[Array[Long]] = Array()
-
+  var idNetwork = 0
   def createTable(coordinates:Seq[Coordinates]):Array[Array[Long]] =
     (for( coord1 <- coordinates)
       yield (for (coord2 <- coordinates)
@@ -28,8 +34,23 @@ object FakePing {
   def initActorSystem(coordinates:Seq[Coordinates]):Seq[ActorRef] = {
     pingTable = createTable(coordinates)
     val system = ActorSystem("testSystem")
+    val myRequest = url("http://vivaldi-monitoring-demo.herokuapp.com/networks/").POST << """{"networkName": "localTest"}""" <:< Map("content-type" -> "application/json")
+    val result = Http(myRequest OK as.String).either
+    var response = ""
+    result() match {
+      case Right(content)         => response = content
+      case Left(StatusCode(404))  => log.error("Not found")
+      case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
+      case _ => log.error("Error")
+    }
+    idNetwork = JSON.parseFull(response).get.asInstanceOf[Map[String, Any]]
+      .get("id").get.asInstanceOf[Double].toInt
+    log.info(idNetwork.toString)
     coordinates.zip(0 until coordinates.length).map({
-      case (coordinate,id) => system.actorOf(Props(classOf[FakeMain], id.toString, id))
+      case (coordinate,id) => {
+        system.actorOf(Props(classOf[FakeMain], id.toString, id))
+
+      }
     })
   }
 
