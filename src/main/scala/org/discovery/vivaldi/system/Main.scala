@@ -125,20 +125,7 @@ class Main(name : String,id:Int) extends Actor {
     closeNodes = closeNodes.sorted.take(numberOfCloseNodes)
   }
 
-  def updateMonitoring = {
-    val x = coordinates.x
-    val y = coordinates.y
-    val requestInit = url("http://vivaldi-monitoring-demo.herokuapp.com/coordinates/").POST << s"""{"nodeId": $name, "x": $x, "y": $y}""" <:< Map("content-type" -> "application/json")
-    val resultInit = Http(requestInit OK as.String).either
-    var responseInit = ""
-    resultInit() match {
-      case Right(content)         => responseInit = content
-      case Left(StatusCode(404))  => log.error("Not found")
-      case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
-      case _ => log.error("Error")
-    }
-  }
-
+  def updateMonitoring = {}
   /**
    * Method to compute the distance between the current node and the node in parameter
    * @param externCoordinates to compute the distance from

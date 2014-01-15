@@ -35,7 +35,7 @@ object FakePing {
   def initActorSystem(coordinates:Seq[Coordinates]):Seq[ActorRef] = {
     pingTable = createTable(coordinates)
     val system = ActorSystem("testSystem")
-    val myRequest = url("http://vivaldi-monitoring-demo.herokuapp.com/networks/").POST << """{"networkName": "localTest3"}""" <:< Map("content-type" -> "application/json")
+    val myRequest = url("http://vivaldi-monitoring-demo.herokuapp.com/networks/").POST << """{"networkName": "localTest6"}""" <:< Map("content-type" -> "application/json")
     val result = Http(myRequest OK as.String).either
     var response = ""
     result() match {
@@ -91,6 +91,20 @@ class FakePing(core:ActorRef,main:ActorRef,id:Integer) extends Communication(cor
 }
 
 class FakeMain(name : String, id : Int) extends Main(name, id) {
+
+  override def updateMonitoring = {
+    val x = coordinates.x
+    val y = coordinates.y
+    val requestInit = url("http://vivaldi-monitoring-demo.herokuapp.com/coordinates/").POST << s"""{"nodeId": $name, "x": $x, "y": $y}""" <:< Map("content-type" -> "application/json")
+    val resultInit = Http(requestInit OK as.String).either
+    var responseInit = ""
+    resultInit() match {
+      case Right(content)         => responseInit = content
+      case Left(StatusCode(404))  => log.error("Not found")
+      case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
+      case _ => log.error("Error")
+    }
+  }
 
   override val vivaldiCore = context.actorOf(Props(classOf[ComputingAlgorithm], self, deltaConf), "VivaldiCore"+id)
   override val network = context.actorOf(Props(classOf[FakePing], vivaldiCore, self, id), "Network"+id)
