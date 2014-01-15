@@ -15,6 +15,7 @@ import org.discovery.vivaldi.dto.CloseNodeInfo
 import org.discovery.vivaldi.dto.RPSInfo
 import org.discovery.vivaldi.dto.UpdatedCoordinates
 import org.discovery.vivaldi.network.Communication.Ping
+import dispatch._
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -100,6 +101,7 @@ class Main(name : String,id:Int) extends Actor {
 
     log.debug(s"New coordinated received for node $id: $newCoordinates")
     coordinates = newCoordinates
+    updateMonitoring
 
     log.debug("Computing & updating distances")
     //Computing the distances from the RPS table
@@ -121,6 +123,20 @@ class Main(name : String,id:Int) extends Actor {
 
     log.debug("Ordering closest node List")
     closeNodes = closeNodes.sorted.take(numberOfCloseNodes)
+  }
+
+  def updateMonitoring = {
+    val x = coordinates.x
+    val y = coordinates.y
+    val requestInit = url("http://vivaldi-monitoring-demo.herokuapp.com/coordinates/").POST << s"""{"nodeId": $name, "x": $x, "y": $y}""" <:< Map("content-type" -> "application/json")
+    val resultInit = Http(requestInit OK as.String).either
+    var responseInit = ""
+    resultInit() match {
+      case Right(content)         => responseInit = content
+      case Left(StatusCode(404))  => log.error("Not found")
+      case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
+      case _ => log.error("Error")
+    }
   }
 
   /**
