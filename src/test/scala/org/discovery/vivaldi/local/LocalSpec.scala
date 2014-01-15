@@ -16,8 +16,8 @@ class LocalSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike wit
   "An actor system " must {
     "work" in {
       val coordinates : Seq[Coordinates] = List(new Coordinates(0,1),new Coordinates(1,0), new Coordinates(0,0), new Coordinates(1,1), new Coordinates(0.5,0.5))
-      val actorRefs = FakePing.initActorSystem(coordinates)
-      FakePing.createLinks(actorRefs)
+      //val actorRefs = FakePing.initActorSystem(coordinates)
+      //FakePing.createLinks(actorRefs)
     }
   }
 }
