@@ -55,8 +55,8 @@ class Main extends Actor {
    * @return
    */
   def receive = {
-    case NextNodesToSelf(excluded, numberOfNodes) => getCloseNodesToSelf(excluded, numberOfNodes)
-    case NextNodesFrom(origin, excluded, numberOfNodes) => getCloseNodesFrom(origin, excluded, numberOfNodes)
+    case NextNodesToSelf(excluded, numberOfNodes) => sender ! getCloseNodesToSelf(excluded, numberOfNodes)
+    case NextNodesFrom(origin, excluded, numberOfNodes) => sender ! getCloseNodesFrom(origin, excluded, numberOfNodes)
     case UpdatedCoordinates(newCoordinates, rps) => updateCoordinates(newCoordinates, rps)
     case DeleteCloseNode(toDelete) => deleteCloseNode(toDelete)
     case _ => log.info("Unknown Message")
