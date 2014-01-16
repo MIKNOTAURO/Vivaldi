@@ -4,6 +4,7 @@ import akka.actor.ActorSystem
 import akka.testkit.TestKit
 import org.scalatest.{WordSpecLike, MustMatchers}
 import org.discovery.vivaldi.dto.{FirstContact, Coordinates}
+import scala.util.Random
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -32,9 +33,39 @@ import org.discovery.vivaldi.dto.{FirstContact, Coordinates}
         -Uncomment the 2 lines below
         - Create your coordinates
        */
-      val coordinates : Seq[Coordinates] = List(new Coordinates(0,1),new Coordinates(1,0), new Coordinates(0,0), new Coordinates(1,1), new Coordinates(0.5,0.5))
-      //val actorRefs = FakePing.initActorSystem(coordinates)
-      //FakePing.createLinks(actorRefs)
+      var coordinates : Seq[Coordinates] = List(
+        new Coordinates(0,0),
+        new Coordinates(1,1),
+        new Coordinates(-1,-1),
+        new Coordinates(-1,1),
+        new Coordinates(2,2),
+        new Coordinates(-2,2),
+        new Coordinates(3,-3),
+        new Coordinates(1,-1),
+        new Coordinates(3,3),
+        new Coordinates(4,4),
+        new Coordinates(-5,5),
+        new Coordinates(5,5),
+        new Coordinates(-5,2),
+        new Coordinates(-3,-3)
+/*        new Coordinates(10,0),
+        new Coordinates(11,1),
+        new Coordinates(-11,-1),
+        new Coordinates(-11,1),
+        new Coordinates(12,2),
+        new Coordinates(-12,2),
+        new Coordinates(13,-3),
+        new Coordinates(11,-1),
+        new Coordinates(13,3),
+        new Coordinates(14,4),
+        new Coordinates(-15,5),
+        new Coordinates(15,5),
+        new Coordinates(-15,2),
+        new Coordinates(-13,-3)*/
+        )
+      /*coordinates = FakePing.createClusters(coordinates)
+      val actorRefs = FakePing.initActorSystem(coordinates)
+      FakePing.createLinks(actorRefs)*/
     }
   }
 }

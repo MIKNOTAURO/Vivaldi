@@ -10,6 +10,7 @@ import scala.concurrent.{ExecutionContext}
 import ExecutionContext.Implicits.global
 import akka.event.slf4j.Logger
 import scala.util.parsing.json.JSON
+import scala.util.Random
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -33,7 +34,7 @@ import scala.util.parsing.json.JSON
 object FakePing {
 
   val log = Logger("Primary")
-  var pingTable : Array[Array[Long]] = Array()
+  var pingTable : Array[Array[Double]] = Array()
   var idNetwork = 0
 
   /**
@@ -41,10 +42,10 @@ object FakePing {
    * @param coordinates
    * @return
    */
-  def createTable(coordinates:Seq[Coordinates]):Array[Array[Long]] =
-    (for( coord1 <- coordinates)
+  def createTable(coordinates:Seq[Coordinates]):Array[Array[Double]] =
+    (for(coord1 <- coordinates)
       yield (for (coord2 <- coordinates)
-        yield math.hypot(coord2.x - coord1.x, coord2.y - coord1.y).toLong).toArray).toArray
+        yield math.hypot(coord2.x - coord1.x, coord2.y - coord1.y)*100).toArray).toArray
 
   /**
    * Creates the network and the different nodes for local test
@@ -56,7 +57,7 @@ object FakePing {
     //Call monitoring to create network
     pingTable = createTable(coordinates)
     val system = ActorSystem("testSystem")
-    val requestNetwork = url("http://vivaldi-monitoring-demo.herokuapp.com/networks/").POST << """{"networkName": "localTest7"}""" <:< Map("content-type" -> "application/json")
+    val requestNetwork = url("http://vivaldi-monitoring-demo.herokuapp.com/networks/").POST << """{"networkName": "localTest22"}""" <:< Map("content-type" -> "application/json")
     val resultNetwork = Http(requestNetwork OK as.String).either
     var responseNetwork = ""
     resultNetwork() match {
@@ -102,6 +103,19 @@ object FakePing {
     })
   }
 
+  def createClusters(list : Seq[Coordinates]) : Seq[Coordinates] = {
+    var newList : List[Coordinates] = List()
+    for (node <- list){
+      newList ::= node
+      val x = node.x
+      val y = node.y
+      for(i <- 1 to 10){
+        newList ::= new Coordinates(x+Math.pow(-1, i)*Random.nextDouble()/10, y+Math.pow(-1, i)*Random.nextDouble()/10)
+      }
+    }
+    Random.shuffle(newList)
+  }
+
   /**
    * Gives FirstContacts for the created nodes
    * @param actorRefs
@@ -124,7 +138,9 @@ class FakePing(core:ActorRef,main:ActorRef,id:Integer) extends Communication(cor
    * @return
    */
    override def calculatePing(sendTime:Long,otherInfo:RPSInfo):Long={
-     FakePing.pingTable(this.id)(otherInfo.id)
+    var ping = FakePing.pingTable(this.id)(otherInfo.id)
+    ping += Random.nextDouble()/10*Math.pow(-1, Random.nextInt(10))*ping
+    ping.toLong
    }
 }
 
