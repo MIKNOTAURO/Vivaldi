@@ -50,7 +50,7 @@ object Communication {
 
 }
 
-class Communication(vivaldiCore: ActorRef, main: ActorRef,id:Int) extends Actor {
+class Communication(vivaldiCore: ActorRef, main: ActorRef,id:Int=0) extends Actor {
 
   val log = Logging(context.system, this)
 
@@ -66,7 +66,6 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef,id:Int) extends Actor 
 
 
   def receive = {
-
     case ping: Ping => receivePing(ping)
     case DoRPSRequest(newInfo: RPSInfo, numberOfNodesToContact) => {
       myInfo = newInfo // we use RPSInfo to propagate new systemInfo and coordinates
@@ -130,10 +129,14 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef,id:Int) extends Actor 
     }
   }
 
+   //refactored this out to be able to easily create asks
+  def singleAsk(info:RPSInfo):Future[Any] ={
+    ask(info.node,Ping(System.currentTimeMillis(),myInfo))(10 seconds) fallbackTo Future(null)
+  }
 
   def askPing(info:RPSInfo): Future[Pong]= {
     //we ask, if it fails (like in a Timeout, notably), we instead return null
-    val future = ask(info.node, Ping(System.currentTimeMillis(), myInfo))(10 seconds) fallbackTo Future(null)
+    val future = singleAsk(info)
     future.map {
       result =>
         if (result.isInstanceOf[Pong]) {
