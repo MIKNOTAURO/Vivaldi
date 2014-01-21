@@ -36,28 +36,31 @@ object FakePing {
   val log = Logger("Primary")
   var pingTable : Array[Array[Double]] = Array()
   var idNetwork = 0
+  val contentType = Map("content-type" -> "application/json")
+  val urlMonitoring = "http://vivaldi-monitoring-demo.herokuapp.com/"
 
   /**
    * Creates the table of pings from given coordinates
    * @param coordinates
    * @return
    */
-  def createTable(coordinates:Seq[Coordinates]):Array[Array[Double]] =
+  def createTable(coordinates:Seq[(Coordinates, String)]):Array[Array[Double]] =
     (for(coord1 <- coordinates)
       yield (for (coord2 <- coordinates)
-        yield math.hypot(coord2.x - coord1.x, coord2.y - coord1.y)*100).toArray).toArray
+        yield math.hypot(coord2._1.x - coord1._1.x, coord2._1.y - coord1._1.y)*100).toArray).toArray
 
   /**
    * Creates the network and the different nodes for local test
    * @param coordinates
    * @return
    */
-  def initActorSystem(coordinates:Seq[Coordinates]):Seq[ActorRef] = {
+  def initActorSystem(coordinates:Seq[(Coordinates, String)]):Seq[ActorRef] = {
 
     //Call monitoring to create network
     pingTable = createTable(coordinates)
     val system = ActorSystem("testSystem")
-    val requestNetwork = url("http://vivaldi-monitoring-demo.herokuapp.com/networks/").POST << """{"networkName": "localTest22"}""" <:< Map("content-type" -> "application/json")
+    val bodySystem = """{"networkName": "france2"}"""
+    val requestNetwork = url(urlMonitoring+"networks/").POST << bodySystem <:< contentType
     val resultNetwork = Http(requestNetwork OK as.String).either
     var responseNetwork = ""
     resultNetwork() match {
@@ -74,7 +77,10 @@ object FakePing {
     coordinates.zip(0 until coordinates.length).map({
       case (coordinate,id) => {
         //call monitoring to create nodes
-        val requestRegister = url("http://vivaldi-monitoring-demo.herokuapp.com/nodes/").POST << s"""{"nodeName": "$id", "networkId": $idNetwork}""" <:< Map("content-type" -> "application/json")
+        val nodeName = coordinate._2
+        val bodyRegister = s"""{"nodeName": "$nodeName", "networkId": $idNetwork}"""
+        log.info(bodyRegister)
+        val requestRegister = url(urlMonitoring+"nodes/").POST << bodyRegister <:< contentType
         val resultRegister = Http(requestRegister OK as.String).either
         var responseRegister = ""
         resultRegister() match {
@@ -88,7 +94,8 @@ object FakePing {
         log.info(s"Id node : $idNode")
 
         //call monitoring to initialize node
-        val requestInit = url("http://vivaldi-monitoring-demo.herokuapp.com/initTimes/").POST << s"""{"nodeId": $idNode}""" <:< Map("content-type" -> "application/json")
+        val bodyInit = s"""{"nodeId": $idNode}"""
+        val requestInit = url(urlMonitoring+"initTimes/").POST << bodyInit <:< contentType
         val resultInit = Http(requestInit OK as.String).either
         resultInit() match {
           case Right(content)         => log.info(s"Node $idNode initialized")
@@ -103,14 +110,16 @@ object FakePing {
     })
   }
 
-  def createClusters(list : Seq[Coordinates]) : Seq[Coordinates] = {
-    var newList : List[Coordinates] = List()
+  def createClusters(list : Seq[(Coordinates, String)]) : Seq[(Coordinates, String)] = {
+    var newList : List[(Coordinates, String)] = List()
     for (node <- list){
       newList ::= node
-      val x = node.x
-      val y = node.y
-      for(i <- 1 to 10){
-        newList ::= new Coordinates(x+Math.pow(-1, i)*Random.nextDouble()/10, y+Math.pow(-1, i)*Random.nextDouble()/10)
+      val x = node._1.x
+      val y = node._1.y
+      val name = node._2
+      for(i <- 1 to 20){
+        newList ::= (new Coordinates(x+Math.pow(-1, i)*Random.nextDouble()/10, y+Math.pow(-1, i)*Random.nextDouble()/10),
+          name+i)
       }
     }
     Random.shuffle(newList)
@@ -152,7 +161,8 @@ class FakeMain(name : String, id : Int) extends Main(name, id) {
   override def updateMonitoring = {
     val x = coordinates.x
     val y = coordinates.y
-    val requestInit = url("http://vivaldi-monitoring-demo.herokuapp.com/coordinates/").POST << s"""{"nodeId": $name, "x": $x, "y": $y}""" <:< Map("content-type" -> "application/json")
+    val bodyUpdate = s"""{"nodeId": $name, "x": $x, "y": $y}"""
+    val requestInit = url("http://vivaldi-monitoring-demo.herokuapp.com/coordinates/").POST << bodyUpdate <:< Map("content-type" -> "application/json")
     val resultInit = Http(requestInit OK as.String).either
     resultInit() match {
       case Right(content)         => log.info("Update coordinates on monitoring "+content)

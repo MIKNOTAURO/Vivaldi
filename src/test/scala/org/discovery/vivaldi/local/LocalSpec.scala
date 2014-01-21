@@ -33,39 +33,18 @@ import scala.util.Random
         -Uncomment the 2 lines below
         - Create your coordinates
        */
-      var coordinates : Seq[Coordinates] = List(
-        new Coordinates(0,0),
-        new Coordinates(1,1),
-        new Coordinates(-1,-1),
-        new Coordinates(-1,1),
-        new Coordinates(2,2),
-        new Coordinates(-2,2),
-        new Coordinates(3,-3),
-        new Coordinates(1,-1),
-        new Coordinates(3,3),
-        new Coordinates(4,4),
-        new Coordinates(-5,5),
-        new Coordinates(5,5),
-        new Coordinates(-5,2),
-        new Coordinates(-3,-3)
-/*        new Coordinates(10,0),
-        new Coordinates(11,1),
-        new Coordinates(-11,-1),
-        new Coordinates(-11,1),
-        new Coordinates(12,2),
-        new Coordinates(-12,2),
-        new Coordinates(13,-3),
-        new Coordinates(11,-1),
-        new Coordinates(13,3),
-        new Coordinates(14,4),
-        new Coordinates(-15,5),
-        new Coordinates(15,5),
-        new Coordinates(-15,2),
-        new Coordinates(-13,-3)*/
-        )
-      /*coordinates = FakePing.createClusters(coordinates)
+      var coordinates : Seq[(Coordinates, String)] = List(
+        (new Coordinates(0,0), "Nantes"),
+        (new Coordinates(0,1), "Rennes"),
+        (new Coordinates(3,1), "Paris"),
+        (new Coordinates(2,-3), "Lyon"),
+        (new Coordinates(1,-5), "Toulouse"),
+        (new Coordinates(5,2), "Reims"),
+        (new Coordinates(-2,1), "Brest"))
+
+      coordinates = FakePing.createClusters(coordinates)
       val actorRefs = FakePing.initActorSystem(coordinates)
-      FakePing.createLinks(actorRefs)*/
+      FakePing.createLinks(actorRefs)
     }
   }
 }
