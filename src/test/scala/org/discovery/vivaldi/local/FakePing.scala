@@ -39,7 +39,8 @@ object FakePing {
   val contentType = Map("content-type" -> "application/json")
   val urlMonitoring = "http://vivaldi-monitoring-demo.herokuapp.com/"
   var actorRefsSeq : Seq[ActorRef] = Nil
-  var coordinatesSeq : Seq[(Coordinates, String)] = Nil
+  var coordinatesSeq : List[(Coordinates, String)] = Nil
+  var system : ActorSystem = null
 
   /**
    * Creates the table of pings from given coordinates
@@ -60,7 +61,7 @@ object FakePing {
 
     //Call monitoring to create network
     pingTable = createTable(coordinates)
-    val system = ActorSystem("testSystem")
+    system = ActorSystem("testSystem")
     val bodySystem = """{"networkName": "france"}"""
     val requestNetwork = url(urlMonitoring+"networks/").POST << bodySystem <:< contentType
     val resultNetwork = Http(requestNetwork OK as.String).either
@@ -125,7 +126,8 @@ object FakePing {
       }
     }
     coordinatesSeq = newList
-    Random.shuffle(newList)
+    //Random.shuffle(newList)
+    newList
   }
 
   def createRandomNode(node : (Coordinates, String), index : Int) : (Coordinates, String) = {
@@ -149,10 +151,22 @@ object FakePing {
   }
 
   def createAndDeleteNode = {
-    /*Thread.sleep(20000)
+    Thread.sleep(20000)
+    var index = 1
     while(true){
-      val coordinate =
-    }*/
+      log.info("HEYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY")
+      val randomIndex = (Random.nextDouble()*(coordinatesSeq.length-1)).toInt
+      var newNode = coordinatesSeq(randomIndex)
+      newNode = (newNode._1, newNode._2 + "New")
+      coordinatesSeq ::= createRandomNode(newNode, index)
+      pingTable = createTable(coordinatesSeq)
+      val idNode = initNode(newNode, coordinatesSeq.length-1);
+      //create actorRef representing the node
+      val newActorRef = system.actorOf(Props(classOf[FakeMain], idNode.toString, coordinatesSeq.length-1))
+      newActorRef ! FirstContact(actorRefsSeq(0))
+      index += 1
+      Thread.sleep(10000)
+    }
   }
 
 }
@@ -167,9 +181,6 @@ class FakePing(core:ActorRef,main:ActorRef,id:Integer) extends Communication(cor
    * @return
    */
    override def calculatePing(sendTime:Long,otherInfo:RPSInfo):Long={
-    log.debug("First Id : "+this.id)
-    log.debug("Second Id : "+otherInfo.id)
-    log.debug("Ping : "+FakePing.pingTable(this.id)(otherInfo.id))
     var ping = FakePing.pingTable(this.id)(otherInfo.id)
     ping += Random.nextDouble()/10*Math.pow(-1, Random.nextInt(10))*ping
     ping.toLong
