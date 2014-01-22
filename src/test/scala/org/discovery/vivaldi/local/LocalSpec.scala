@@ -4,6 +4,7 @@ import akka.actor.ActorSystem
 import akka.testkit.TestKit
 import org.scalatest.{WordSpecLike, MustMatchers}
 import org.discovery.vivaldi.dto.{FirstContact, Coordinates}
+import scala.util.Random
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -27,9 +28,23 @@ import org.discovery.vivaldi.dto.{FirstContact, Coordinates}
  class LocalSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with MustMatchers{
   "An actor system " must {
     "work" in {
-      val coordinates : Seq[Coordinates] = List(new Coordinates(0,1),new Coordinates(1,0), new Coordinates(0,0), new Coordinates(1,1))
+      /*
+      To activate local test :
+        -Uncomment the 2 lines below
+        - Create your coordinates
+       */
+      var coordinates : Seq[(Coordinates, String)] = List(
+        (new Coordinates(0,0), "Nantes"),
+        (new Coordinates(0,1), "Rennes"),
+        (new Coordinates(3,1), "Paris"),
+        (new Coordinates(2,-3), "Lyon"),
+        (new Coordinates(1,-5), "Toulouse"),
+        (new Coordinates(5,2), "Reims"),
+        (new Coordinates(-2,1), "Brest"))
+/*
+      coordinates = FakePing.createClusters(coordinates)
       val actorRefs = FakePing.initActorSystem(coordinates)
-      FakePing.createLinks(actorRefs)
+      FakePing.createLinks(actorRefs)*/
     }
   }
 }
