@@ -62,6 +62,7 @@ class Main(name : String,id:Int) extends Actor {
     case UpdatedCoordinates(newCoordinates, rps) => updateCoordinates(newCoordinates, rps)
     case DeleteCloseNode(toDelete) => deleteCloseNode(toDelete)
     case p: Ping => network forward p
+    case f:FirstContact => network forward f
     case unknownMessage => log.info("Unkown Message "+unknownMessage)
   }
 
@@ -184,7 +185,7 @@ class Main(name : String,id:Int) extends Actor {
   }
 
   def callNetwork() = {
-    val myInfo = RPSInfo(self, coordinates, 0)
+    val myInfo = RPSInfo(self, coordinates, 0, this.id)
     network ! DoRPSRequest(myInfo, numberOfNodesCalled)
   }
 
