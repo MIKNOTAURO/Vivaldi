@@ -10,7 +10,18 @@ System
 ------
 The System part is both the orchestrator and the keeper of the close node list. It  parses the configuration file to handle initialisation of the node. It also keeps the list of close nodes up-to-date thanks to information received from the Vivaldi part. Finaly it also provides the API to retrieve the closest node to the current one.
 
-Currently:
+### Initialization
+As to Initialize the Vivaldi module, it needs to receive the AKKA Actor Reference of the first node to contact. This node will be used as an entering point in the Network for Vivaldi.
+
+To send this node reference to Vivaldi, you just have to send it the following message :
+```scala
+/**
+  * Message to tell Vivaldi the first node to contact.
+  * @param node ActorRef of the first node to contact.
+  */
+case class FirstContact(node: ActorRef)
+```
+
 ### API
 As for now the API is accessible by sending messages to the system.
 Here are the different messages available :
