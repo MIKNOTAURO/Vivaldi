@@ -38,6 +38,8 @@ object FakePing {
   var idNetwork = 0
   val contentType = Map("content-type" -> "application/json")
   val urlMonitoring = "http://vivaldi-monitoring-demo.herokuapp.com/"
+  var actorRefsSeq : Seq[ActorRef] = Nil
+  var coordinatesSeq : Seq[(Coordinates, String)] = Nil
 
   /**
    * Creates the table of pings from given coordinates
@@ -59,7 +61,7 @@ object FakePing {
     //Call monitoring to create network
     pingTable = createTable(coordinates)
     val system = ActorSystem("testSystem")
-    val bodySystem = """{"networkName": "france2"}"""
+    val bodySystem = """{"networkName": "france"}"""
     val requestNetwork = url(urlMonitoring+"networks/").POST << bodySystem <:< contentType
     val resultNetwork = Http(requestNetwork OK as.String).either
     var responseNetwork = ""
@@ -76,53 +78,62 @@ object FakePing {
     //Create nodes
     coordinates.zip(0 until coordinates.length).map({
       case (coordinate,id) => {
-        //call monitoring to create nodes
-        val nodeName = coordinate._2
-        val bodyRegister = s"""{"nodeName": "$nodeName", "networkId": $idNetwork}"""
-        log.info(bodyRegister)
-        val requestRegister = url(urlMonitoring+"nodes/").POST << bodyRegister <:< contentType
-        val resultRegister = Http(requestRegister OK as.String).either
-        var responseRegister = ""
-        resultRegister() match {
-          case Right(content)         => responseRegister = content
-          case Left(StatusCode(404))  => log.error("Not found")
-          case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
-          case _ => log.error("Error")
-        }
-        val idNode = JSON.parseFull(responseRegister).get.asInstanceOf[Map[String, Any]]
-          .get("id").get.asInstanceOf[Double].toInt
-        log.info(s"Id node : $idNode")
-
-        //call monitoring to initialize node
-        val bodyInit = s"""{"nodeId": $idNode}"""
-        val requestInit = url(urlMonitoring+"initTimes/").POST << bodyInit <:< contentType
-        val resultInit = Http(requestInit OK as.String).either
-        resultInit() match {
-          case Right(content)         => log.info(s"Node $idNode initialized")
-          case Left(StatusCode(404))  => log.error("Not found")
-          case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
-          case _ => log.error("Error")
-        }
-
+        val idNode = initNode(coordinate, id);
         //create actorRef representing the node
         system.actorOf(Props(classOf[FakeMain], idNode.toString, id))
       }
     })
   }
 
+  def initNode (coordinate : (Coordinates, String), id : Int) : Int = {
+    //call monitoring to create nodes
+    val nodeName = coordinate._2
+    val bodyRegister = s"""{"nodeName": "$nodeName", "networkId": $idNetwork}"""
+    log.info(bodyRegister)
+    val requestRegister = url(urlMonitoring+"nodes/").POST << bodyRegister <:< contentType
+    val resultRegister = Http(requestRegister OK as.String).either
+    var responseRegister = ""
+    resultRegister() match {
+      case Right(content)         => responseRegister = content
+      case Left(StatusCode(404))  => log.error("Not found")
+      case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
+      case _ => log.error("Error")
+    }
+    val idNode = JSON.parseFull(responseRegister).get.asInstanceOf[Map[String, Any]]
+      .get("id").get.asInstanceOf[Double].toInt
+    log.info(s"Id node : $idNode")
+
+    //call monitoring to initialize node
+    val bodyInit = s"""{"nodeId": $idNode}"""
+    val requestInit = url(urlMonitoring+"initTimes/").POST << bodyInit <:< contentType
+    val resultInit = Http(requestInit OK as.String).either
+    resultInit() match {
+      case Right(content)         => log.info(s"Node $idNode initialized")
+      case Left(StatusCode(404))  => log.error("Not found")
+      case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
+      case _ => log.error("Error")
+    }
+    idNode
+  }
+
   def createClusters(list : Seq[(Coordinates, String)]) : Seq[(Coordinates, String)] = {
     var newList : List[(Coordinates, String)] = List()
     for (node <- list){
       newList ::= node
-      val x = node._1.x
-      val y = node._1.y
-      val name = node._2
-      for(i <- 1 to 20){
-        newList ::= (new Coordinates(x+Math.pow(-1, i)*Random.nextDouble()/10, y+Math.pow(-1, i)*Random.nextDouble()/10),
-          name+i)
+      for(i <- 1 to 5){
+        newList ::= createRandomNode(node, i)
       }
     }
+    coordinatesSeq = newList
     Random.shuffle(newList)
+  }
+
+  def createRandomNode(node : (Coordinates, String), index : Int) : (Coordinates, String) = {
+    val x = node._1.x
+    val y = node._1.y
+    val name = node._2
+    (new Coordinates(x+Math.pow(-1, index)*Random.nextDouble()/10, y+Math.pow(-1, index)*Random.nextDouble()/10),
+      name+index)
   }
 
   /**
@@ -133,6 +144,15 @@ object FakePing {
     for (actorRef <- actorRefs) {
       actorRef ! FirstContact(actorRefs(0))
     }
+    actorRefsSeq = actorRefs
+    createAndDeleteNode
+  }
+
+  def createAndDeleteNode = {
+    /*Thread.sleep(20000)
+    while(true){
+      val coordinate =
+    }*/
   }
 
 }
@@ -147,9 +167,16 @@ class FakePing(core:ActorRef,main:ActorRef,id:Integer) extends Communication(cor
    * @return
    */
    override def calculatePing(sendTime:Long,otherInfo:RPSInfo):Long={
+    log.debug("First Id : "+this.id)
+    log.debug("Second Id : "+otherInfo.id)
+    log.debug("Ping : "+FakePing.pingTable(this.id)(otherInfo.id))
     var ping = FakePing.pingTable(this.id)(otherInfo.id)
     ping += Random.nextDouble()/10*Math.pow(-1, Random.nextInt(10))*ping
     ping.toLong
+   }
+
+   def killActor(){
+     context.stop(self);
    }
 }
 
