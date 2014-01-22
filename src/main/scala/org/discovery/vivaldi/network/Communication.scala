@@ -80,7 +80,6 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef,id:Int=0) extends Acto
 
   def receivePing(ping: Ping) {
     //size check is necessary to make sure our rps grows at one point (this will make our rps initially very self-biased.
-    //log.debug("Received ping from :"+ ping)
     rps = Random.shuffle(rps + ping.selfInfo).take(rpsSize)
     sender ! Pong(ping.sendTime, myInfo, rps)
   }
@@ -98,7 +97,6 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef,id:Int=0) extends Acto
   }
 
   def contactNodes(numberOfNodesToContact: Int) {
-    //log.debug(s"Order to contact $numberOfNodesToContact received")
     val toContact = rps.take(Math.min(rps.size, numberOfNodesToContact))
     val asks = toContact map askPing
 
@@ -120,7 +118,6 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef,id:Int=0) extends Acto
 
     allAsks onComplete {
       case Success(newInfos: Set[Pong]) => {
-        //log.debug("Finished pinging, going to mix")
         val newRPS = newInfos.map(_.selfInfo)
         vivaldiCore ! UpdatedRPS(newRPS)
         rps = mixRPS(newInfos)

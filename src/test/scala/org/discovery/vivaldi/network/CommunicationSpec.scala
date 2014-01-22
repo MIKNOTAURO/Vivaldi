@@ -48,20 +48,6 @@ class CommunicationSpec extends TestKit(ActorSystem("testSystem")) with Implicit
       }
 
       implicit val timeout = Timeout(2000)
-/* test DOES NOT WORK, but for testing framework reasons
-      "have an increasing RPS initially " in {
-        val actor1 = TestActorRef[Main](new Main("stuff",2))
-        val com1 = TestActorRef[Communication](new Communication(actor1.underlyingActor.vivaldiCore,actor))
-        val actor2 = TestActorRef[Main](new Main("More stuff",3))
-        val com2 = TestActorRef[Communication](new Communication(actor2.underlyingActor.vivaldiCore,actor))
-        val result = {
-          Await.result(com1 ? Ping(0, RPSInfo(com2, Coordinates(10, 10), 17)), 5 seconds)
-        }
-        assert(result.isInstanceOf[Pong])
-        result match {
-          case Pong(time,info,rps) => assert(rps.size>1)
-        }
-      }
-*/
   }
+
 }

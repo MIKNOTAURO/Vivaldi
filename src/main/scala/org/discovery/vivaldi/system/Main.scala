@@ -97,10 +97,8 @@ class Main(name : String,id:Int) extends Actor {
 
     val rps = rpsIterable.toSeq
 
-    //log.debug(s"New coordinated received: $newCoordinates")
     coordinates = newCoordinates
 
-    //log.debug("Computing & updating distances")
     //Computing the distances from the RPS table
     val RPSCloseNodes = rps.map(node => CloseNodeInfo(node.node, node.coordinates,computeDistanceToSelf(node.coordinates)))
 
@@ -118,7 +116,6 @@ class Main(name : String,id:Int) extends Actor {
     //Adding new Nodes
     closeNodes = RPSCloseNodesToAdd ++ closeNodes
 
-    //log.debug("Ordering closest node List")
     closeNodes = closeNodes.sorted.take(numberOfCloseNodes)
   }
 
@@ -184,8 +181,6 @@ class Main(name : String,id:Int) extends Actor {
   }
 
   def callNetwork() = {
-    //log.debug("Scheduler for RPS request called")
-    //log.debug(s"$numberOfNodesCalled nodes will be called")
     val myInfo = RPSInfo(self, coordinates, 0)
     network ! DoRPSRequest(myInfo, numberOfNodesCalled)
   }
