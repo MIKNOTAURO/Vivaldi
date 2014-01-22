@@ -50,7 +50,7 @@ object Communication {
 
 }
 
-class Communication(vivaldiCore: ActorRef, main: ActorRef,id:Int) extends Actor {
+class Communication(vivaldiCore: ActorRef, main: ActorRef,id:Int=0) extends Actor {
 
   val log = Logging(context.system, this)
 
@@ -66,7 +66,6 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef,id:Int) extends Actor 
 
 
   def receive = {
-
     case ping: Ping => receivePing(ping)
     case DoRPSRequest(newInfo: RPSInfo, numberOfNodesToContact) => {
       myInfo = newInfo // we use RPSInfo to propagate new systemInfo and coordinates
@@ -75,13 +74,12 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef,id:Int) extends Actor 
     case FirstContact(node) => rps = Set(RPSInfo(node, Coordinates(0, 0), 1000000, this.id)) // I don't know the system information here
     case NewRPS(newRPS) => rps = newRPS
     case unknownMessage => {
-      log.info("Unknown message "+unknownMessage)
+      log.error("Unknown message:"+unknownMessage)
     }
   }
 
   def receivePing(ping: Ping) {
     //size check is necessary to make sure our rps grows at one point (this will make our rps initially very self-biased.
-    log.debug("Received ping from :"+ ping)
     rps = Random.shuffle(rps + ping.selfInfo).take(rpsSize)
     sender ! Pong(ping.sendTime, myInfo, rps)
   }
@@ -93,13 +91,12 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef,id:Int) extends Actor 
     Random.shuffle(rpses ++ rps).take(rpsSize)
   }
 
-  //overwridden in fakeping class
+  //overwritten in fake ping class
   def calculatePing(sendTime:Long,otherInfo:RPSInfo):Long = {
     System.currentTimeMillis()-sendTime
   }
 
   def contactNodes(numberOfNodesToContact: Int) {
-    log.debug(s"Order to contact $numberOfNodesToContact received")
     val toContact = rps.take(Math.min(rps.size, numberOfNodesToContact))
     val asks = toContact map askPing
 
@@ -109,7 +106,6 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef,id:Int) extends Actor 
           result <- ask
           if result != null
           Pong(sendTime, otherInfo, otherRPS) = result
-        //if selfInfo != null
         } yield {
           val pingTime = calculatePing(sendTime,otherInfo)
           val newOtherInfo = otherInfo.copy(ping = pingTime)
@@ -121,7 +117,6 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef,id:Int) extends Actor 
 
     allAsks onComplete {
       case Success(newInfos: Set[Pong]) => {
-        log.debug("Finished pinging, going to mix")
         val newRPS = newInfos.map(_.selfInfo)
         vivaldiCore ! UpdatedRPS(newRPS)
         rps = mixRPS(newInfos)
@@ -130,10 +125,14 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef,id:Int) extends Actor 
     }
   }
 
+   //refactored this out to be able to easily create asks
+  def singleAsk(info:RPSInfo):Future[Any] ={
+    ask(info.node,Ping(System.currentTimeMillis(),myInfo))(10 seconds) fallbackTo Future(null)
+  }
 
   def askPing(info:RPSInfo): Future[Pong]= {
     //we ask, if it fails (like in a Timeout, notably), we instead return null
-    val future = ask(info.node, Ping(System.currentTimeMillis(), myInfo))(10 seconds) fallbackTo Future(null)
+    val future = singleAsk(info)
     future.map {
       result =>
         if (result.isInstanceOf[Pong]) {
