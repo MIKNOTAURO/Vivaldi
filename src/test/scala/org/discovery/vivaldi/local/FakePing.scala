@@ -117,7 +117,7 @@ object FakePing {
       val x = node._1.x
       val y = node._1.y
       val name = node._2
-      for(i <- 1 to 20){
+      for(i <- 1 to 5){
         newList ::= (new Coordinates(x+Math.pow(-1, i)*Random.nextDouble()/10, y+Math.pow(-1, i)*Random.nextDouble()/10),
           name+i)
       }
