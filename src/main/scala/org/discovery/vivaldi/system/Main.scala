@@ -99,6 +99,7 @@ class Main(name : String,id:Int) extends Actor {
     val rps = rpsIterable.toSeq
 
     coordinates = newCoordinates
+    updateMonitoring
 
     //Computing the distances from the RPS table
     val RPSCloseNodes = rps.map(node => CloseNodeInfo(node.node, node.coordinates,computeDistanceToSelf(node.coordinates)))
@@ -120,6 +121,7 @@ class Main(name : String,id:Int) extends Actor {
     closeNodes = closeNodes.sorted.take(numberOfCloseNodes)
   }
 
+  def updateMonitoring = {}
   /**
    * Method to compute the distance between the current node and the node in parameter
    * @param externCoordinates to compute the distance from
