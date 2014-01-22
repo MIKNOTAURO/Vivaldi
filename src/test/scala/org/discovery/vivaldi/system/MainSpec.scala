@@ -33,11 +33,11 @@ class MainSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with
 
   "The system actor for the close nodes list generation and the API" must {
     // Creation of the TestActorRef
-    val testMainActor = TestActorRef[Main]
+    val testMainActor = TestActorRef(new Main("testMain", 0))
 
-    val mainActorOne = TestActorRef[Main]
-    val mainActorTwo = TestActorRef[Main]
-    val mainActorThree = TestActorRef[Main]
+    val mainActorOne = TestActorRef(new Main("mainActorOne", 1))
+    val mainActorTwo = TestActorRef(new Main("mainActorTwo", 2))
+    val mainActorThree = TestActorRef(new Main("mainActorThree", 3))
 
     val rpsOne = RPSInfo(mainActorOne.underlyingActor.network,Coordinates(1,0),10)
     val rpsTwo = RPSInfo(mainActorTwo.underlyingActor.network,Coordinates(3,1),20)
@@ -99,7 +99,7 @@ class MainSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with
 
   "The main actor for initialization" must {
 
-    val mainActor = TestActorRef[Main]
+    val mainActor = TestActorRef(new Main("testMain", 0))
     val changeTime = mainActor.underlyingActor.changeTime
 
     "not cancel the first scheduler before changeTime" in {

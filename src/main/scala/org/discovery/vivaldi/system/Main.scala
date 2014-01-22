@@ -14,6 +14,7 @@ import org.discovery.vivaldi.dto.DoRPSRequest
 import org.discovery.vivaldi.dto.CloseNodeInfo
 import org.discovery.vivaldi.dto.RPSInfo
 import org.discovery.vivaldi.dto.UpdatedCoordinates
+import org.discovery.vivaldi.network.Communication.Ping
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -34,14 +35,14 @@ import org.discovery.vivaldi.dto.UpdatedCoordinates
  * limitations under the License.
  * ============================================================ */
 
-class Main extends Actor {
+class Main(name : String,id:Int) extends Actor {
 
   val log = Logging(context.system, this)
 
   //Creating child actors
   val deltaConf = context.system.settings.config.getDouble("vivaldi.system.vivaldi.delta")
   val vivaldiCore = context.actorOf(Props(classOf[ComputingAlgorithm], self, deltaConf), "VivaldiCore")
-  val network = context.actorOf(Props(classOf[Communication], vivaldiCore, self), "Network")
+  val network = context.actorOf(Props(classOf[Communication], vivaldiCore, self, 0), "Network")
 
   var coordinates: Coordinates = Coordinates(0,0)
   var closeNodes: Seq[CloseNodeInfo] = Seq()
@@ -59,7 +60,8 @@ class Main extends Actor {
     case NextNodesFrom(origin, excluded, numberOfNodes) => sender ! getCloseNodesFrom(origin, excluded, numberOfNodes)
     case UpdatedCoordinates(newCoordinates, rps) => updateCoordinates(newCoordinates, rps)
     case DeleteCloseNode(toDelete) => deleteCloseNode(toDelete)
-    case _ => log.info("Unknown Message")
+    case p: Ping => network forward p
+    case unknownMessage => log.info("Unkown Message "+unknownMessage)
   }
 
   /**
@@ -95,10 +97,8 @@ class Main extends Actor {
 
     val rps = rpsIterable.toSeq
 
-    log.debug(s"New coordinated received: $newCoordinates")
     coordinates = newCoordinates
 
-    log.debug("Computing & updating distances")
     //Computing the distances from the RPS table
     val RPSCloseNodes = rps.map(node => CloseNodeInfo(node.node, node.coordinates,computeDistanceToSelf(node.coordinates)))
 
@@ -116,7 +116,6 @@ class Main extends Actor {
     //Adding new Nodes
     closeNodes = RPSCloseNodesToAdd ++ closeNodes
 
-    log.debug("Ordering closest node List")
     closeNodes = closeNodes.sorted.take(numberOfCloseNodes)
   }
 
@@ -151,20 +150,17 @@ class Main extends Actor {
 
   }
 
+  case class CountCalls();
+
   val firstCallTime = configInit.getInt("firstCallTime")
   val timeBetweenCallsFirst = configInit.getInt("timeBetweenCallsFirst")
   val timeBetweenCallsThen = configInit.getInt("timeBetweenCallsThen")
   val numberOfNodesCalled = configInit.getInt("numberOfNodesCalled")
   val changeTime =  configInit.getInt("changeTime")
 
+  var numberOfCalls = 0
 
-  /**
-   *  First call made
-  Used to init the system with a first node
-   */
-  val initScheduler = context.system.scheduler.scheduleOnce(firstCallTime seconds){
-     network ! FirstContact(self) // TODO Fix that
-  }
+  val myInfo = RPSInfo(this.network, coordinates, 1067, this.id) // TODO Fix that
 
   /**
    *  Creates a scheduler
@@ -185,8 +181,6 @@ class Main extends Actor {
   }
 
   def callNetwork() = {
-    log.debug("Scheduler for RPS request called")
-    log.debug(s"$numberOfNodesCalled nodes will be called")
     val myInfo = RPSInfo(self, coordinates, 0)
     network ! DoRPSRequest(myInfo, numberOfNodesCalled)
   }

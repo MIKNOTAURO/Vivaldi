@@ -30,7 +30,7 @@ import scala.util.Random
 class ComputingAlgorithmSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with MustMatchers {
 
   "The core actor for the computing algorithm" must {
-    val mainActor = TestActorRef[Main]
+    val mainActor = TestActorRef(new Main("testMain", 0))
 
     val rpsOne = RPSInfo(mainActor.underlyingActor.network,Coordinates(3,-4),10)
     val rpsTwo = RPSInfo(mainActor.underlyingActor.network,Coordinates(-4.5,6),10)

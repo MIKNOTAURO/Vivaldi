@@ -1,8 +1,19 @@
 package org.discovery.vivaldi.network
 
-import akka.actor.ActorSystem
-import akka.testkit.TestKit
+import akka.pattern.ask
+import akka.actor.{Props, ActorSystem, Actor}
+import akka.testkit.{TestActor,TestActorRef, TestKit,ImplicitSender}
 import org.scalatest.{MustMatchers, WordSpecLike}
+import org.discovery.vivaldi.network.Communication._
+import org.discovery.vivaldi.system.Main
+import org.discovery.vivaldi.dto.{FirstContact, Coordinates, RPSInfo}
+import akka.event.Logging
+import org.scalatest.time.Seconds
+import akka.util.Timeout
+
+import ch.qos.logback.classic.Level
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -23,6 +34,20 @@ import org.scalatest.{MustMatchers, WordSpecLike}
  * limitations under the License.
  * ============================================================ */
 
-class CommunicationSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with MustMatchers {
+
+class CommunicationSpec extends TestKit(ActorSystem("testSystem")) with ImplicitSender with WordSpecLike with MustMatchers {
+  "The network block " must {
+      val actor = TestActorRef[Main](new Main("Stuff",1))
+      val com   = TestActorRef[Communication](new Communication(actor.underlyingActor.vivaldiCore,actor))
+      val PONG  = Pong(0,null,null).getClass
+      "put pingers into RPS" in {
+        com.receive(Ping(System.currentTimeMillis(),RPSInfo(self,Coordinates(0,0),12)),self)
+        expectMsgClass(PONG)
+        println(com.underlyingActor.rps)
+        assert(com.underlyingActor.rps.exists { case RPSInfo(id,x,y,z) => id == self })
+      }
+
+      implicit val timeout = Timeout(2000)
+  }
 
 }

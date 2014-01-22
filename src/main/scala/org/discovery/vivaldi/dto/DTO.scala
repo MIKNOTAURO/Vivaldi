@@ -35,7 +35,7 @@ trait nodeInfo {
  * @param coordinates
  * @param ping
  */
-case class RPSInfo(node: ActorRef,  coordinates: Coordinates, ping: Long) extends nodeInfo
+case class RPSInfo(node: ActorRef,  coordinates: Coordinates, ping: Long, id : Int = 0) extends nodeInfo
 
 /**
  * Class containing the information about a node and its distance from the current node.

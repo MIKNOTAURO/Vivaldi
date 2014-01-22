@@ -1,8 +1,9 @@
-package org.discovery.vivaldi
+package org.discovery.vivaldi.local
 
-import akka.event.slf4j.Logger
-import akka.actor.{Props, ActorSystem}
-import org.discovery.vivaldi.system.Main
+import akka.actor.ActorSystem
+import akka.testkit.TestKit
+import org.scalatest.{WordSpecLike, MustMatchers}
+import org.discovery.vivaldi.dto.{FirstContact, Coordinates}
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -23,18 +24,12 @@ import org.discovery.vivaldi.system.Main
  * limitations under the License.
  * ============================================================ */
 
-object Vivaldi {
-
-  val log = Logger("Primary")
-
-  def main(args: Array[String]) = {
-
-    val akkaSystem = ActorSystem("Vivaldi")
-
-    val system = akkaSystem.actorOf(Props(classOf[Main], "main", 0), "System")
-
-    log.info("coucous")
-
+ class LocalSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with MustMatchers{
+  "An actor system " must {
+    "work" in {
+      val coordinates : Seq[Coordinates] = List(new Coordinates(0,1),new Coordinates(1,0), new Coordinates(0,0), new Coordinates(1,1))
+      val actorRefs = FakePing.initActorSystem(coordinates)
+      FakePing.createLinks(actorRefs)
+    }
   }
-
 }
