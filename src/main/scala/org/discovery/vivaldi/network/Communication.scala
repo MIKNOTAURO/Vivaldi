@@ -91,7 +91,7 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef,id:Int=0) extends Acto
     Random.shuffle(rpses ++ rps).take(rpsSize)
   }
 
-  //overwridden in fakeping class
+  //overwritten in fake ping class
   def calculatePing(sendTime:Long,otherInfo:RPSInfo):Long = {
     System.currentTimeMillis()-sendTime
   }
@@ -106,7 +106,6 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef,id:Int=0) extends Acto
           result <- ask
           if result != null
           Pong(sendTime, otherInfo, otherRPS) = result
-        //if selfInfo != null
         } yield {
           val pingTime = calculatePing(sendTime,otherInfo)
           val newOtherInfo = otherInfo.copy(ping = pingTime)
