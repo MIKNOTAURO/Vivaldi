@@ -42,10 +42,10 @@ import scala.util.Random
         (new Coordinates(5,2), "Reims"),
         (new Coordinates(-2,1), "Brest"))
 
-      coordinates = FakePing.createClusters(coordinates)
+      /*coordinates = FakePing.createClusters(coordinates)
       val actorRefs = FakePing.initActorSystem(coordinates)
       FakePing.createLinks(actorRefs)
-
+      */
     }
   }
 }
