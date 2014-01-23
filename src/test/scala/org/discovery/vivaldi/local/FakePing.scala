@@ -121,7 +121,7 @@ object FakePing {
     var newList : List[(Coordinates, String)] = List()
     for (node <- list){
       newList ::= node
-      for(i <- 1 to 5){
+      for(i <- 1 to 20){
         newList ::= createRandomNode(node, i)
       }
     }
@@ -154,18 +154,17 @@ object FakePing {
     Thread.sleep(20000)
     var index = 1
     while(true){
-      log.info("HEYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY")
       val randomIndex = (Random.nextDouble()*(coordinatesSeq.length-1)).toInt
       var newNode = coordinatesSeq(randomIndex)
       newNode = (newNode._1, newNode._2 + "New")
-      coordinatesSeq ::= createRandomNode(newNode, index)
+      coordinatesSeq ++= List(createRandomNode(newNode, index))
       pingTable = createTable(coordinatesSeq)
       val idNode = initNode(newNode, coordinatesSeq.length-1);
       //create actorRef representing the node
       val newActorRef = system.actorOf(Props(classOf[FakeMain], idNode.toString, coordinatesSeq.length-1))
       newActorRef ! FirstContact(actorRefsSeq(0))
       index += 1
-      Thread.sleep(10000)
+      Thread.sleep(20000)
     }
   }
 
