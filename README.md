@@ -28,19 +28,25 @@ Here are the different messages available :
 
 ```scala
 // API Messages
-/**
- * Message to get the next closest Nodes to self
- * @param excluded nodes to exclude from the result. By default it is empty.
- * @param numberOfNodes number of nodes to return. 1 by default.
- */
+  /**
+   * Method that retrieves the closest nodes from self
+   * @param excluded excluded nodes from the result by default nothing is excluded
+   * @param numberOfNodes number of nodes to return by default we return one node
+   * @return a Sequence of the closest nodes if the number of nodes required is bigger
+   *         than the number of nodes in the sequence, the entire table is returned.
+   *         The maximum number of nodes is then updated to the amount of nodes required
+   */
 case class NextNodesToSelf(excluded: Set[nodeInfo] = Set(), numberOfNodes: Int = 1)
 
-/**
- * Message to get the next closest Nodes to origin
- * @param origin node from which you want the closest node from
- * @param excluded nodes to exclude from the result. By default it is empty.
- * @param numberOfNodes number of nodes to return. 1 by default.
- */
+  /**
+   * Method that retrieves the closest nodes from the origin
+   * @param origin reference node
+   * @param excluded excluded nodes from the result. By default nothing is excluded
+   * @param numberOfNodes number of nodes to return. By default we return one node
+   * @return a Sequence of the closest nodes. if the number of nodes required is bigger
+   *         than the number of nodes in the sequence, the entire table is returned.
+   *         The maximum number of nodes is then updated to the amount of nodes required
+   */
 case class NextNodesFrom(origin: nodeInfo, excluded: Set[nodeInfo] = Set(), numberOfNodes: Int = 1)
 ```
 
