@@ -50,7 +50,7 @@ class Main(name : String,id:Int) extends Actor {
 
   val config = context.system.settings.config.getConfig("vivaldi.system")
   val configInit = config.getConfig("init")
-  val numberOfCloseNodes = config.getInt("closeNodes.size")
+  var numberOfCloseNodes = config.getInt("closeNodes.size")
 
   /**
    * Method that handles the oncoming messages
@@ -70,11 +70,19 @@ class Main(name : String,id:Int) extends Actor {
    * Method that retrieves the closest nodes from self
    * @param excluded excluded nodes from the result by default nothing is excluded
    * @param numberOfNodes number of nodes to return by default we return one node
-   * @return a Sequence of the closest nodes
+   * @return a Sequence of the closest nodes if the number of nodes required is bigger
+   *         than the number of nodes in the sequence, the entire table is returned.
+   *         The maximum number of nodes is then updated to the amount of nodes required
    */
   def getCloseNodesToSelf(excluded: Set[nodeInfo], numberOfNodes: Int): Seq[nodeInfo] = {
     // we take as a reference the current node, we only have to retrieve the n first elements of the list without the excluded nodes
-    closeNodes.filterNot(excluded contains).take(numberOfNodes)
+    if (numberOfNodes <= numberOfCloseNodes){
+      closeNodes.filterNot(excluded contains).take(numberOfNodes)
+    } else {
+      val temp = numberOfCloseNodes
+      numberOfCloseNodes = numberOfNodes
+      closeNodes.filterNot(excluded contains).take(temp)
+    }
   }
 
   /**
@@ -82,12 +90,21 @@ class Main(name : String,id:Int) extends Actor {
    * @param origin reference node
    * @param excluded excluded nodes from the result. By default nothing is excluded
    * @param numberOfNodes number of nodes to return. By default we return one node
-   * @return a Sequence of the closest nodes
+   * @return a Sequence of the closest nodes. if the number of nodes required is bigger
+   *         than the number of nodes in the sequence, the entire table is returned.
+   *         The maximum number of nodes is then updated to the amount of nodes required
    */
   def getCloseNodesFrom(origin: nodeInfo, excluded: Set[nodeInfo] , numberOfNodes: Int ): Seq[nodeInfo] = {
-      // we just have to compute the distances between the reference and the nodes in memory, sort them, and send the n closest without excluded nodes
-      val relativeDistancesSeq = closeNodes.map(node => node.copy(distanceFromSelf = computeDistanceBtw(origin.coordinates,this.coordinates)))
+    // we just have to compute the distances between the reference and the nodes in memory, sort them, and send the n closest without excluded nodes
+    val relativeDistancesSeq = closeNodes.map(node => node.copy(distanceFromSelf = computeDistanceBtw(origin.coordinates,this.coordinates)))
+
+    if (numberOfNodes <= numberOfCloseNodes){
       relativeDistancesSeq.sorted.filterNot(excluded contains).take(numberOfNodes)
+    } else {
+      val temp = numberOfCloseNodes
+      numberOfCloseNodes = numberOfNodes
+      relativeDistancesSeq.sorted.filterNot(excluded contains).take(temp)
+    }
   }
 
   /**
