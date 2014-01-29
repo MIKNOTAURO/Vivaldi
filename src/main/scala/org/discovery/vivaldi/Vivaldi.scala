@@ -2,7 +2,7 @@ package org.discovery.vivaldi
 
 import akka.event.slf4j.Logger
 import akka.actor.{Props, ActorSystem}
-import org.discovery.vivaldi.system.Main
+import org.discovery.vivaldi.system.VivaldiActor
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -25,16 +25,16 @@ import org.discovery.vivaldi.system.Main
 
 object Vivaldi {
 
-  val log = Logger("Primary")
+//  val log = Logger("Primary")
 
   def main(args: Array[String]) = {
 
 
     val akkaSystem = ActorSystem("Vivaldi")
 
-    val system = akkaSystem.actorOf(Props[Main], "System")
+    val system = akkaSystem.actorOf(Props(new VivaldiActor(1)), "System")
 
-    log.info("coucous")
+//    log.info("coucous")
   }
 
 }

@@ -1,6 +1,7 @@
 package org.discovery.vivaldi.dto
 
 import akka.actor.ActorRef
+import org.discovery.vivaldi.network.CommunicationMessage
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -25,6 +26,7 @@ import akka.actor.ActorRef
  * Trait defining the common properties of a node
  */
 trait nodeInfo {
+  val id: Long
   val node: ActorRef
   val coordinates: Coordinates
 }
@@ -35,7 +37,7 @@ trait nodeInfo {
  * @param coordinates
  * @param ping
  */
-case class RPSInfo(node: ActorRef,  coordinates: Coordinates, ping: Long) extends nodeInfo
+case class RPSInfo(id: Long, node: ActorRef,  coordinates: Coordinates, ping: Long) extends nodeInfo
 
 /**
  * Class containing the information about a node and its distance from the current node.
@@ -43,7 +45,7 @@ case class RPSInfo(node: ActorRef,  coordinates: Coordinates, ping: Long) extend
  * @param coordinates
  * @param distanceFromSelf
  */
-case class CloseNodeInfo(node: ActorRef, coordinates: Coordinates, distanceFromSelf: Double) extends nodeInfo with Ordered[CloseNodeInfo] {
+case class CloseNodeInfo(id: Long, node: ActorRef, coordinates: Coordinates, distanceFromSelf: Double) extends nodeInfo with Ordered[CloseNodeInfo] {
   override def compare(that: CloseNodeInfo) = (this.distanceFromSelf - that.distanceFromSelf).signum
 
   override def equals(obj: Any) = obj match {
@@ -78,9 +80,9 @@ case class Coordinates(x: Double, y: Double) {
   */
 case class DeleteCloseNode(nodeToDelete: RPSInfo)
 
-case class DoRPSRequest(newInfo:RPSInfo,numberOfNodesToContact: Int) // System-Network Message
+case class DoRPSRequest(newInfo:RPSInfo,numberOfNodesToContact: Int) extends CommunicationMessage // System-Network Message
 
-case class FirstContact(node: ActorRef) //System-Network Message
+case class FirstContact(node: ActorRef) extends CommunicationMessage //System-Network Message
 
 case class UpdatedRPS(rps: Iterable[RPSInfo]) // Network-Vivaldi Message
 

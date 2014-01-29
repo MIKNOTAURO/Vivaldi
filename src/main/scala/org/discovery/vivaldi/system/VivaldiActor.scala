@@ -1,11 +1,11 @@
 package org.discovery.vivaldi.system
 
 import akka.event.Logging
-import akka.actor.{Props, Actor}
+import akka.actor.{ActorRef, Props, Actor}
 import org.discovery.vivaldi.core.ComputingAlgorithm
 import scala.concurrent.duration._
 import org.discovery.vivaldi.dto._
-import org.discovery.vivaldi.network.Communication
+import org.discovery.vivaldi.network.{CommunicationMessage, Communication}
 import scala.math._
 import scala.concurrent.ExecutionContext
 import ExecutionContext.Implicits.global
@@ -34,14 +34,14 @@ import org.discovery.vivaldi.dto.UpdatedCoordinates
  * limitations under the License.
  * ============================================================ */
 
-class Main extends Actor {
+class VivaldiActor(id: Long, outgoingActor: Option[ActorRef] = None) extends Actor {
 
   val log = Logging(context.system, this)
 
   //Creating child actors
   val deltaConf = context.system.settings.config.getDouble("vivaldi.system.vivaldi.delta")
   val vivaldiCore = context.actorOf(Props(classOf[ComputingAlgorithm], self, deltaConf), "VivaldiCore")
-  val network = context.actorOf(Props(classOf[Communication], vivaldiCore, self), "Network")
+  val network = context.actorOf(Props(classOf[Communication], id, vivaldiCore, self), "Network")
 
   var coordinates: Coordinates = Coordinates(0,0)
   var closeNodes: Seq[CloseNodeInfo] = Seq()
@@ -55,11 +55,23 @@ class Main extends Actor {
    * @return
    */
   def receive = {
-    case NextNodesToSelf(excluded, numberOfNodes) => getCloseNodesToSelf(excluded, numberOfNodes)
-    case NextNodesFrom(origin, excluded, numberOfNodes) => getCloseNodesFrom(origin, excluded, numberOfNodes)
+    case NextNodesToSelf(excluded, numberOfNodes) =>
+      sender ! getCloseNodesToSelf(excluded, numberOfNodes)
+    case NextNodesFrom(origin, excluded, numberOfNodes) =>
+      sender ! getCloseNodesFrom(origin, excluded, numberOfNodes)
     case UpdatedCoordinates(newCoordinates, rps) => updateCoordinates(newCoordinates, rps)
     case DeleteCloseNode(toDelete) => deleteCloseNode(toDelete)
-    case _ => log.info("Unknown Message")
+
+    /* routing messages to child actors */
+    case communicationMessage: CommunicationMessage =>
+      network.forward(communicationMessage)
+
+    /* Unknown message => log */
+    case msg =>
+      outgoingActor match {
+        case Some(ref) => ref.forward(msg)
+        case None => log.info(s"Unknown Message: $msg")
+      }
   }
 
   /**
@@ -70,7 +82,8 @@ class Main extends Actor {
    */
   def getCloseNodesToSelf(excluded: Set[nodeInfo], numberOfNodes: Int): Seq[nodeInfo] = {
     // we take as a reference the current node, we only have to retrieve the n first elements of the list without the excluded nodes
-    closeNodes.filterNot(excluded contains).take(numberOfNodes)
+//    closeNodes.filterNot(excluded contains).take(numberOfNodes)
+    closeNodes.filterNot(n => excluded.exists(m => m.id == n.id)).take(numberOfNodes)
   }
 
   /**
@@ -83,7 +96,7 @@ class Main extends Actor {
   def getCloseNodesFrom(origin: nodeInfo, excluded: Set[nodeInfo] , numberOfNodes: Int ): Seq[nodeInfo] = {
       // we just have to compute the distances between the reference and the nodes in memory, sort them, and send the n closest without excluded nodes
       val relativeDistancesSeq = closeNodes.map(node => node.copy(distanceFromSelf = computeDistanceBtw(origin.coordinates,this.coordinates)))
-      relativeDistancesSeq.sorted.filterNot(excluded contains).take(numberOfNodes)
+      relativeDistancesSeq.sorted.filterNot(excluded contains).take(numberOfNodes).take(numberOfNodes)
   }
 
   /**
@@ -100,7 +113,7 @@ class Main extends Actor {
 
     log.debug("Computing & updating distances")
     //Computing the distances from the RPS table
-    val RPSCloseNodes = rps.map(node => CloseNodeInfo(node.node, node.coordinates,computeDistanceToSelf(node.coordinates)))
+    val RPSCloseNodes = rps.map(node => CloseNodeInfo(node.id, node.node, node.coordinates,computeDistanceToSelf(node.coordinates)))
 
     //TODO Test contain with data and code the method equals for closeNodes
     //Retrieve nodes to update
@@ -187,7 +200,7 @@ class Main extends Actor {
   def callNetwork() = {
     log.debug("Scheduler for RPS request called")
     log.debug(s"$numberOfNodesCalled nodes will be called")
-    val myInfo = RPSInfo(self, coordinates, 0)
+    val myInfo = RPSInfo(id, self, coordinates, 0)
     network ! DoRPSRequest(myInfo, numberOfNodesCalled)
   }
 

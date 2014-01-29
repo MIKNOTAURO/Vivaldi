@@ -1,7 +1,7 @@
 package org.discovery.vivaldi.system
 
 import akka.testkit.{TestActorRef, TestKit}
-import akka.actor.{ActorSystem}
+import akka.actor.{Props, ActorSystem}
 import org.scalatest.{WordSpecLike, MustMatchers}
 import scala.concurrent.duration._
 import org.discovery.vivaldi.dto._
@@ -33,22 +33,22 @@ class MainSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with
 
   "The system actor for the close nodes list generation and the API" must {
     // Creation of the TestActorRef
-    val testMainActor = TestActorRef[Main]
+    val testMainActor: TestActorRef[VivaldiActor] = TestActorRef(Props(new VivaldiActor(0)))
 
-    val mainActorOne = TestActorRef[Main]
-    val mainActorTwo = TestActorRef[Main]
-    val mainActorThree = TestActorRef[Main]
+    val mainActorOne: TestActorRef[VivaldiActor] = TestActorRef(Props(new VivaldiActor(1)))
+    val mainActorTwo: TestActorRef[VivaldiActor] = TestActorRef(Props(new VivaldiActor(2)))
+    val mainActorThree: TestActorRef[VivaldiActor] = TestActorRef(Props(new VivaldiActor(3)))
 
-    val rpsOne = RPSInfo(mainActorOne.underlyingActor.network,Coordinates(1,0),10)
-    val rpsTwo = RPSInfo(mainActorTwo.underlyingActor.network,Coordinates(3,1),20)
-    val rpsThree = RPSInfo(mainActorThree.underlyingActor.network,Coordinates(3,4),50)
+    val rpsOne = RPSInfo(1, mainActorOne.underlyingActor.network,Coordinates(1,0),10)
+    val rpsTwo = RPSInfo(2, mainActorTwo.underlyingActor.network,Coordinates(3,1),20)
+    val rpsThree = RPSInfo(3, mainActorThree.underlyingActor.network,Coordinates(3,4),50)
     val newRpsTable = Seq(rpsOne,rpsTwo,rpsThree)
 
     val newCoordinates = Coordinates(1,1)
 
-    val closeNodeOne = CloseNodeInfo(mainActorOne.underlyingActor.network,Coordinates(1,0),1)
-    val closeNodeTwo = CloseNodeInfo(mainActorTwo.underlyingActor.network,Coordinates(3,1),2)
-    val closeNodeThree = CloseNodeInfo(mainActorThree.underlyingActor.network,Coordinates(3,4),sqrt(13))
+    val closeNodeOne = CloseNodeInfo(1, mainActorOne.underlyingActor.network,Coordinates(1,0),1)
+    val closeNodeTwo = CloseNodeInfo(2, mainActorTwo.underlyingActor.network,Coordinates(3,1),2)
+    val closeNodeThree = CloseNodeInfo(3, mainActorThree.underlyingActor.network,Coordinates(3,4),sqrt(13))
     val closeNodesToBe = Seq(closeNodeOne,closeNodeTwo,closeNodeThree)
 
     "Compute the distance between two points" in {
@@ -99,7 +99,7 @@ class MainSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with
 
   "The main actor for initialization" must {
 
-    val mainActor = TestActorRef[Main]
+    val mainActor: TestActorRef[VivaldiActor] = TestActorRef(Props(new VivaldiActor(0)))
     val changeTime = mainActor.underlyingActor.changeTime
 
     "not cancel the first scheduler before changeTime" in {

@@ -37,16 +37,17 @@ import org.discovery.vivaldi.dto.RPSInfo
  * limitations under the License.
  * ============================================================ */
 
+trait CommunicationMessage
 
-object Communication{
+object Communication {
   // Ping/Pong are used in the RPS update process, to measure ping and recover new RPSs
-  case class Ping(sendTime:Long, selfInfo: RPSInfo)
-  case class Pong(sendTime:Long,selfInfo:RPSInfo,rps:Iterable[RPSInfo])
+  case class Ping(sendTime:Long, selfInfo: RPSInfo) extends CommunicationMessage
+  case class Pong(sendTime:Long,selfInfo:RPSInfo,rps:Iterable[RPSInfo]) extends CommunicationMessage
   //NewRPS is used to update the RPS (in the "mix RPS" phase)
-  case class NewRPS(rps:Iterable[RPSInfo])
+  case class NewRPS(rps:Iterable[RPSInfo]) extends CommunicationMessage
 }
 
-class Communication(vivaldiCore: ActorRef, main: ActorRef) extends Actor {
+class Communication(id: Long, vivaldiCore: ActorRef, main: ActorRef) extends Actor {
 
   val log = Logging(context.system, this)
 
@@ -58,7 +59,7 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef) extends Actor {
   implicit val pingTimeout = Timeout(5 seconds)
 
   //TODO set systemInfo
-  var myInfo:RPSInfo= RPSInfo(self,Coordinates(0,0),0)//the ping in myInfo isn't used
+  var myInfo:RPSInfo= RPSInfo(id, self,Coordinates(0,0),0)//the ping in myInfo isn't used
 
 
   def receive = {
@@ -68,10 +69,10 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef) extends Actor {
       myInfo=newInfo  // we use RPSInfo to propagate new systemInfo and coordinates
       contactNodes(numberOfNodesToContact)
     }
-    case FirstContact(node) => rps = Seq(RPSInfo(node,null,1000000))// I don't know the system information here
+    case FirstContact(node) => rps = Seq(RPSInfo(id, node,null,1000000))// I don't know the system information here
     case NewRPS(newRPS) => rps = newRPS
-    case _ => {
-      log.info("Unknown message")
+    case msg => {
+      log.info(s"Unknown Message: $msg")
     }
   }
 
