@@ -2,7 +2,7 @@ package org.discovery.vivaldi.local
 
 import akka.actor.{ActorSystem, Props, ActorRef}
 import org.discovery.vivaldi.dto.{FirstContact, RPSInfo, Coordinates}
-import org.discovery.vivaldi.system.Main
+import org.discovery.vivaldi.system.{VivaldiActor}
 import org.discovery.vivaldi.core.ComputingAlgorithm
 import org.discovery.vivaldi.network.Communication
 import dispatch._
@@ -59,7 +59,7 @@ object FakePing {
     //Call monitoring to create network
     pingTable = createTable(coordinates)
     val system = ActorSystem("testSystem")
-    val bodySystem = """{"networkName": "france2"}"""
+    val bodySystem = """{"networkName": "france"}"""
     val requestNetwork = url(urlMonitoring+"networks/").POST << bodySystem <:< contentType
     val resultNetwork = Http(requestNetwork OK as.String).either
     var responseNetwork = ""
@@ -105,7 +105,7 @@ object FakePing {
         }
 
         //create actorRef representing the node
-        system.actorOf(Props(classOf[FakeMain], idNode.toString, id))
+        system.actorOf(Props(classOf[FakeMain], idNode.toString, id.toLong))
       }
     })
   }
@@ -138,7 +138,7 @@ object FakePing {
 }
 
 
-class FakePing(core:ActorRef,main:ActorRef,id:Integer) extends Communication(core,main,id) {
+class FakePing(id:Long, core:ActorRef, main:ActorRef) extends Communication(id, core, main) {
 
   /**
    * Gives the ping from the ping table created in the function createTable
@@ -147,13 +147,13 @@ class FakePing(core:ActorRef,main:ActorRef,id:Integer) extends Communication(cor
    * @return
    */
    override def calculatePing(sendTime:Long,otherInfo:RPSInfo):Long={
-    var ping = FakePing.pingTable(this.id)(otherInfo.id)
+    var ping = FakePing.pingTable(this.id.toInt)(otherInfo.id.toInt)
     ping += Random.nextDouble()/10*Math.pow(-1, Random.nextInt(10))*ping
     ping.toLong
    }
 }
 
-class FakeMain(name : String, id : Int) extends Main(name, id) {
+class FakeMain(name : String, id : Long) extends VivaldiActor(name, id) {
 
   /**
    * Calls monitoring to update coordinates
@@ -173,7 +173,7 @@ class FakeMain(name : String, id : Int) extends Main(name, id) {
   }
 
   override val vivaldiCore = context.actorOf(Props(classOf[ComputingAlgorithm], self, deltaConf), "VivaldiCore"+id)
-  override val network = context.actorOf(Props(classOf[FakePing], vivaldiCore, self, id), "Network"+id)
+  override val network = context.actorOf(Props(classOf[FakePing], id, vivaldiCore, self), "Network"+id)
 
 }
 

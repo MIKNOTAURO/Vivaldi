@@ -29,10 +29,9 @@ object Vivaldi {
 
   def main(args: Array[String]) = {
 
-
     val akkaSystem = ActorSystem("Vivaldi")
 
-    val system = akkaSystem.actorOf(Props(new VivaldiActor(1)), "System")
+    val system = akkaSystem.actorOf(Props(new VivaldiActor("1", 1)), "System")
 
 //    log.info("coucous")
   }

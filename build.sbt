@@ -4,8 +4,6 @@ version := "0.1"
 
 scalaVersion := "2.10.3"
 
-unmanagedResourceDirectories in Compile <+= baseDirectory( _ / "src" )
-
 resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
 
 libraryDependencies += "com.typesafe.akka" %% "akka-actor" % "2.2.3"
@@ -21,5 +19,3 @@ libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.0.13"
 libraryDependencies += "net.databinder.dispatch" %% "dispatch-core" % "0.11.0"
 
 lazy val logback = "ch.qos.logback" % "logback-classic" % "1.0.13"
-
-seq(assemblySettings: _*)

@@ -36,14 +36,14 @@ import dispatch._
  * limitations under the License.
  * ============================================================ */
 
-class VivaldiActor(name: String,id: Long, outgoingActor: Option[ActorRef] = None) extends Actor {
+class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = None) extends Actor {
 
   val log = Logging(context.system, this)
 
   //Creating child actors
   val deltaConf = context.system.settings.config.getDouble("vivaldi.system.vivaldi.delta")
   val vivaldiCore = context.actorOf(Props(classOf[ComputingAlgorithm], self, deltaConf), "VivaldiCore")
-  val network = context.actorOf(Props(classOf[Communication],id, id, vivaldiCore, self), "Network")
+  val network = context.actorOf(Props(classOf[Communication], id, vivaldiCore, self), "Network")
 
   var coordinates: Coordinates = Coordinates(0,0)
   var closeNodes: Seq[CloseNodeInfo] = Seq()
@@ -178,7 +178,7 @@ class VivaldiActor(name: String,id: Long, outgoingActor: Option[ActorRef] = None
 
   var numberOfCalls = 0
 
-  val myInfo = RPSInfo(this.network, coordinates, 1067, this.id) // TODO Fix that
+  val myInfo = RPSInfo(this.id, this.network, coordinates, 1067) // TODO Fix that
 
   /**
    *  Creates a scheduler

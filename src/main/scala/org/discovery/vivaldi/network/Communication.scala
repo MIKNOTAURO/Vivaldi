@@ -44,14 +44,14 @@ object Communication{
   case class Ping(sendTime: Long, selfInfo: RPSInfo) extends CommunicationMessage
   case class Pong(sendTime: Long,selfInfo: RPSInfo,rps: Iterable[RPSInfo]) extends CommunicationMessage
   //NewRPS is used to update the RPS (in the "mix RPS" phase)
-  case class NewRPS(rps: Iterable[RPSInfo]) extends CommunicationMessage
+  case class NewRPS(rps: Set[RPSInfo]) extends CommunicationMessage
 }
 
 class Communication(id: Long, vivaldiCore: ActorRef, main: ActorRef) extends Actor {
 
   val log = Logging(context.system, this)
 
-  var rps: Iterable[RPSInfo] = Seq[RPSInfo]()
+  var rps = Set[RPSInfo]()
 
   val rpsSize = context.system.settings.config.getConfig("vivaldi.system").getInt("communication.rpssize")
 
@@ -59,7 +59,7 @@ class Communication(id: Long, vivaldiCore: ActorRef, main: ActorRef) extends Act
   implicit val pingTimeout = Timeout(5 seconds)
 
   //TODO set systemInfo
-  var myInfo:RPSInfo= RPSInfo(id, self,Coordinates(0,0),23)//the ping in myInfo isn't used
+  var myInfo:RPSInfo = RPSInfo(id, self,Coordinates(0,0),23)//the ping in myInfo isn't used
 
 
   def receive = {
@@ -69,7 +69,7 @@ class Communication(id: Long, vivaldiCore: ActorRef, main: ActorRef) extends Act
       myInfo = newInfo  // we use RPSInfo to propagate new systemInfo and coordinates
       contactNodes(numberOfNodesToContact)
     }
-    case FirstContact(node) => rps = Seq(RPSInfo(id, node,null,1000000))// I don't know the system information here
+    case FirstContact(node) => rps = Set(RPSInfo(id, node,null,1000000))// I don't know the system information here
     case NewRPS(newRPS) => rps = newRPS
     case msg => {
       log.info(s"Unknown Message: $msg")
@@ -115,7 +115,7 @@ class Communication(id: Long, vivaldiCore: ActorRef, main: ActorRef) extends Act
     val allAsks = Future sequence updatedAsks
 
     allAsks onComplete {
-      case Success(newInfos: Iterable[Pong]) => {
+      case Success(newInfos: Set[Pong]) => {
         val newRPS = newInfos.map(_.selfInfo)
         vivaldiCore ! UpdatedRPS(newRPS)
         rps = mixRPS(newInfos)
