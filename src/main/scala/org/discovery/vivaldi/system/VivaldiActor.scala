@@ -14,6 +14,8 @@ import org.discovery.vivaldi.dto.DoRPSRequest
 import org.discovery.vivaldi.dto.CloseNodeInfo
 import org.discovery.vivaldi.dto.RPSInfo
 import org.discovery.vivaldi.dto.UpdatedCoordinates
+import org.discovery.vivaldi.network.Communication.Ping
+import dispatch._
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -34,14 +36,14 @@ import org.discovery.vivaldi.dto.UpdatedCoordinates
  * limitations under the License.
  * ============================================================ */
 
-class VivaldiActor(id: Long, outgoingActor: Option[ActorRef] = None) extends Actor {
+class VivaldiActor(name: String,id: Long, outgoingActor: Option[ActorRef] = None) extends Actor {
 
   val log = Logging(context.system, this)
 
   //Creating child actors
   val deltaConf = context.system.settings.config.getDouble("vivaldi.system.vivaldi.delta")
   val vivaldiCore = context.actorOf(Props(classOf[ComputingAlgorithm], self, deltaConf), "VivaldiCore")
-  val network = context.actorOf(Props(classOf[Communication], id, vivaldiCore, self), "Network")
+  val network = context.actorOf(Props(classOf[Communication],id, id, vivaldiCore, self), "Network")
 
   var coordinates: Coordinates = Coordinates(0,0)
   var closeNodes: Seq[CloseNodeInfo] = Seq()
@@ -64,7 +66,7 @@ class VivaldiActor(id: Long, outgoingActor: Option[ActorRef] = None) extends Act
 
     /* routing messages to child actors */
     case communicationMessage: CommunicationMessage =>
-      network.forward(communicationMessage)
+      network forward communicationMessage
 
     /* Unknown message => log */
     case msg =>
@@ -96,7 +98,7 @@ class VivaldiActor(id: Long, outgoingActor: Option[ActorRef] = None) extends Act
   def getCloseNodesFrom(origin: nodeInfo, excluded: Set[nodeInfo] , numberOfNodes: Int ): Seq[nodeInfo] = {
       // we just have to compute the distances between the reference and the nodes in memory, sort them, and send the n closest without excluded nodes
       val relativeDistancesSeq = closeNodes.map(node => node.copy(distanceFromSelf = computeDistanceBtw(origin.coordinates,this.coordinates)))
-      relativeDistancesSeq.sorted.filterNot(excluded contains).take(numberOfNodes).take(numberOfNodes)
+      relativeDistancesSeq.sorted.filterNot(excluded contains).take(numberOfNodes)
   }
 
   /**
@@ -110,6 +112,7 @@ class VivaldiActor(id: Long, outgoingActor: Option[ActorRef] = None) extends Act
 
     log.debug(s"New coordinated received: $newCoordinates")
     coordinates = newCoordinates
+    updateMonitoring
 
     log.debug("Computing & updating distances")
     //Computing the distances from the RPS table
@@ -133,6 +136,7 @@ class VivaldiActor(id: Long, outgoingActor: Option[ActorRef] = None) extends Act
     closeNodes = closeNodes.sorted.take(numberOfCloseNodes)
   }
 
+  def updateMonitoring = {}
   /**
    * Method to compute the distance between the current node and the node in parameter
    * @param externCoordinates to compute the distance from
@@ -164,20 +168,17 @@ class VivaldiActor(id: Long, outgoingActor: Option[ActorRef] = None) extends Act
 
   }
 
+  case class CountCalls();
+
   val firstCallTime = configInit.getInt("firstCallTime")
   val timeBetweenCallsFirst = configInit.getInt("timeBetweenCallsFirst")
   val timeBetweenCallsThen = configInit.getInt("timeBetweenCallsThen")
   val numberOfNodesCalled = configInit.getInt("numberOfNodesCalled")
   val changeTime =  configInit.getInt("changeTime")
 
+  var numberOfCalls = 0
 
-  /**
-   *  First call made
-  Used to init the system with a first node
-   */
-  val initScheduler = context.system.scheduler.scheduleOnce(firstCallTime seconds){
-     network ! FirstContact(self) // TODO Fix that
-  }
+  val myInfo = RPSInfo(this.network, coordinates, 1067, this.id) // TODO Fix that
 
   /**
    *  Creates a scheduler

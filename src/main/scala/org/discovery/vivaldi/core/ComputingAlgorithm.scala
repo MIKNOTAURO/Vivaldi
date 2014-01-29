@@ -40,19 +40,18 @@ import scala.util.Random
    }
 
    def compute(rps: Iterable[RPSInfo]): Coordinates = {
-     log.debug(s"Received RPS $rps")
      //Vivaldi algorithm
      for (oneRps <- rps) {
        coordinates = coordinates.add(computeOne(oneRps))
      }
-
-     log.debug(s"New coordinates computed: $coordinates")
-     log.debug("Sending coordinates to the system actor")
      system ! UpdatedCoordinates(coordinates, rps) //Envoi des coordonnées calculées à la brique Système
      coordinates
    }
 
    def computeOne(oneRps: RPSInfo): Coordinates = {
+
+     val delta = 0.5
+     //TODO see what value we assign to delta
 
      // Compute error of this sample. (1)
      val diffX = coordinates.x - oneRps.coordinates.x
@@ -78,4 +77,5 @@ import scala.util.Random
        Coordinates(diffX/hyp, diffY/hyp)
      }
    }
+
 }

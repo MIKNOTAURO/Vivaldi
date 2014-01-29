@@ -18,4 +18,8 @@ libraryDependencies += "org.scalatest" % "scalatest_2.10" % "2.0" % "test"
 
 libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.0.13"
 
+libraryDependencies += "net.databinder.dispatch" %% "dispatch-core" % "0.11.0"
+
+lazy val logback = "ch.qos.logback" % "logback-classic" % "1.0.13"
+
 seq(assemblySettings: _*)
