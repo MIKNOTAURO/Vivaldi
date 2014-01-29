@@ -1,7 +1,7 @@
 package org.discovery.vivaldi.system
 
 import akka.testkit.{TestActorRef, TestKit}
-import akka.actor.{Props, ActorSystem}
+import akka.actor.{ActorSystem}
 import org.scalatest.{WordSpecLike, MustMatchers}
 import scala.concurrent.duration._
 import org.discovery.vivaldi.dto._
@@ -33,11 +33,11 @@ class MainSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with
 
   "The system actor for the close nodes list generation and the API" must {
     // Creation of the TestActorRef
-    val testMainActor: TestActorRef[VivaldiActor] = TestActorRef(Props(new VivaldiActor(0)))
+    val testMainActor: TestActorRef[VivaldiActor] = TestActorRef[VivaldiActor](new VivaldiActor("0", 0))
 
-    val mainActorOne: TestActorRef[VivaldiActor] = TestActorRef(Props(new VivaldiActor(1)))
-    val mainActorTwo: TestActorRef[VivaldiActor] = TestActorRef(Props(new VivaldiActor(2)))
-    val mainActorThree: TestActorRef[VivaldiActor] = TestActorRef(Props(new VivaldiActor(3)))
+    val mainActorOne: TestActorRef[VivaldiActor] = TestActorRef[VivaldiActor](new VivaldiActor("1", 1))
+    val mainActorTwo: TestActorRef[VivaldiActor] = TestActorRef[VivaldiActor](new VivaldiActor("2", 2))
+    val mainActorThree: TestActorRef[VivaldiActor] = TestActorRef[VivaldiActor](new VivaldiActor("3", 3))
 
     val rpsOne = RPSInfo(1, mainActorOne.underlyingActor.network,Coordinates(1,0),10)
     val rpsTwo = RPSInfo(2, mainActorTwo.underlyingActor.network,Coordinates(3,1),20)
@@ -99,7 +99,7 @@ class MainSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with
 
   "The main actor for initialization" must {
 
-    val mainActor: TestActorRef[VivaldiActor] = TestActorRef(Props(new VivaldiActor(0)))
+    val mainActor: TestActorRef[VivaldiActor] = TestActorRef[VivaldiActor](new VivaldiActor("0", 0))
     val changeTime = mainActor.underlyingActor.changeTime
 
     "not cancel the first scheduler before changeTime" in {
