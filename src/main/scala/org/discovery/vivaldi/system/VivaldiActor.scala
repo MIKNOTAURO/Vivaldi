@@ -84,8 +84,7 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
    */
   def getCloseNodesToSelf(excluded: Set[nodeInfo], numberOfNodes: Int): Seq[nodeInfo] = {
     // we take as a reference the current node, we only have to retrieve the n first elements of the list without the excluded nodes
-//    closeNodes.filterNot(excluded contains).take(numberOfNodes)
-    closeNodes.filterNot(n => excluded.exists(m => m.id == n.id)).take(numberOfNodes)
+    closeNodes.sorted.filterNot(n => excluded.exists(m => m.id == n.id)).take(numberOfNodes)
   }
 
   /**
@@ -98,7 +97,7 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
   def getCloseNodesFrom(origin: nodeInfo, excluded: Set[nodeInfo] , numberOfNodes: Int ): Seq[nodeInfo] = {
       // we just have to compute the distances between the reference and the nodes in memory, sort them, and send the n closest without excluded nodes
       val relativeDistancesSeq = closeNodes.map(node => node.copy(distanceFromSelf = computeDistanceBtw(origin.coordinates,this.coordinates)))
-      relativeDistancesSeq.sorted.filterNot(excluded contains).take(numberOfNodes)
+      relativeDistancesSeq.sorted.filterNot(n => excluded.exists(e => e.id == n.id)).take(numberOfNodes)
   }
 
   /**
@@ -120,20 +119,22 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
 
     //TODO Test contain with data and code the method equals for closeNodes
     //Retrieve nodes to update
-    val RPSCloseNodesUpdates = RPSCloseNodes intersect closeNodes
+//    val RPSCloseNodesUpdates = RPSCloseNodes intersect closeNodes
+    val RPSCloseNodesUpdates = RPSCloseNodes.filter(n => closeNodes.exists(e => e.id == n.id))
     //Get rid of the nodes already in the list
-    val RPSCloseNodesToAdd = RPSCloseNodes.filterNot(RPSCloseNodesUpdates contains)
+    val RPSCloseNodesToAdd = RPSCloseNodes.filterNot(n => RPSCloseNodesUpdates.exists(e => e.id == n.id))
 
     //Computing and updating distances for the existing nodes
     closeNodes = closeNodes.map(node => node.copy(distanceFromSelf = computeDistanceToSelf(this.coordinates)))
     //Updating RPS nodes already in closeNodes
-    closeNodes =  RPSCloseNodesUpdates ++ closeNodes.filterNot(RPSCloseNodesUpdates contains)
+    closeNodes =  RPSCloseNodesUpdates ++ closeNodes.filterNot(n => RPSCloseNodesUpdates.exists(e => e.id == n.id))
 
     //Adding new Nodes
     closeNodes = RPSCloseNodesToAdd ++ closeNodes
 
-    log.debug("Ordering closest node List")
     closeNodes = closeNodes.sorted.take(numberOfCloseNodes)
+
+    log.info(s"[TICK] coordinate: ${newCoordinates}, rps: ${rpsIterable.toList}, closeNodes: ${closeNodes.toList}")
   }
 
   def updateMonitoring = {}
