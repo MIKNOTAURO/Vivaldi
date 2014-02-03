@@ -39,16 +39,18 @@ class MainSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with
     val mainActorTwo = TestActorRef(new Main("mainActorTwo", 2))
     val mainActorThree = TestActorRef(new Main("mainActorThree", 3))
 
-    val rpsOne = RPSInfo(mainActorOne.underlyingActor.network,Coordinates(1,0),10)
-    val rpsTwo = RPSInfo(mainActorTwo.underlyingActor.network,Coordinates(3,1),20)
-    val rpsThree = RPSInfo(mainActorThree.underlyingActor.network,Coordinates(3,4),50)
+    val rpsOne = RPSInfo(mainActorOne,Coordinates(1,0),10)
+    val rpsTwo = RPSInfo(mainActorTwo,Coordinates(3,1),20)
+    val rpsThree = RPSInfo(mainActorThree,Coordinates(3,4),50)
     val newRpsTable = Seq(rpsOne,rpsTwo,rpsThree)
 
     val newCoordinates = Coordinates(1,1)
 
-    val closeNodeOne = CloseNodeInfo(mainActorOne.underlyingActor.network,Coordinates(1,0),1)
-    val closeNodeTwo = CloseNodeInfo(mainActorTwo.underlyingActor.network,Coordinates(3,1),2)
-    val closeNodeThree = CloseNodeInfo(mainActorThree.underlyingActor.network,Coordinates(3,4),sqrt(13))
+    val closeNodeOne = CloseNodeInfo(mainActorOne,Coordinates(1,0),1)
+    val closeNodeTwo = CloseNodeInfo(mainActorTwo,Coordinates(3,1),2)
+    val closeNodeThree = CloseNodeInfo(mainActorThree,Coordinates(3,4),sqrt(13))
+    val closeNodeFour = CloseNodeInfo(mainActorThree.underlyingActor.network, Coordinates(1,4),sqrt(13)) // It will appear as dead for isAwake
+    val closeNodeFive = CloseNodeInfo(mainActorThree,Coordinates(0,2),sqrt(13))
     val closeNodesToBe = Seq(closeNodeOne,closeNodeTwo,closeNodeThree)
 
     "Compute the distance between two points" in {
@@ -73,6 +75,12 @@ class MainSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with
       assert(testMainActor.underlyingActor.closeNodes == closeNodesToBe)
     }
 
+    "Be able to check if another node is awake" in {
+      assertResult(true) {
+        testMainActor.underlyingActor.isAwake(closeNodeOne)
+      }
+    }
+
     "Be able to retrieve the closest node to self" in {
       assertResult(List(closeNodeOne)){
         testMainActor.underlyingActor.getCloseNodesToSelf(Set(),1)
@@ -85,6 +93,7 @@ class MainSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with
       }
     }
 
+
     "Be able to retrieve close nodes to another node" in {
       assertResult(List(closeNodeTwo)){
         testMainActor.underlyingActor.getCloseNodesFrom(closeNodeThree,Set(closeNodeOne),1)
@@ -95,6 +104,14 @@ class MainSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with
       testMainActor.underlyingActor.deleteCloseNode(rpsThree)
       assert(Seq(closeNodeOne,closeNodeTwo) == testMainActor.underlyingActor.closeNodes)
     }
+
+    "Be able to retrieve the closests nodes without taking the dead one" in {
+      testMainActor.underlyingActor.closeNodes = closeNodesToBe ++ List(closeNodeFour, closeNodeFive)
+      assertResult(List(closeNodeOne, closeNodeTwo, closeNodeThree, closeNodeFive)) {
+        testMainActor.underlyingActor.getCloseNodesToSelf(Set(), 5)
+      }
+    }
+
   }
 
   "The main actor for initialization" must {

@@ -9,7 +9,7 @@ import scala.concurrent.duration._
 import org.discovery.vivaldi.dto._
 import org.discovery.vivaldi.network.Communication
 import scala.math._
-import scala.concurrent.{Future, ExecutionContext}
+import scala.concurrent.{Await, Future, ExecutionContext}
 import ExecutionContext.Implicits.global
 import org.discovery.vivaldi.dto.Coordinates
 import org.discovery.vivaldi.dto.DoRPSRequest
@@ -88,18 +88,24 @@ class Main(name : String,id:Int) extends Actor {
   def isAwake(info: nodeInfo): Boolean = {
     implicit val timeout = Timeout(5 seconds)
     val response = info.node ? AreYouAwake()
-    response map {
+    try {
+      Await.result(response, 6 seconds) match {
+        case r: IAmAwake => {
+          log.debug(s"Node $info is well, processing closeNode table")
+          mergeCloseNodesTable(r.closeNodes)
+          true
+        }
+      }
+    } catch {
       case e: AskTimeoutException => {
-        log.debug(s"Node $info is not responding")
+        log.warning(s"Node $info is not responding")
         false
       }
-      case r: IAmAwake => {
-        log.debug(s"Node $info is well, processing closeNode table")
-        mergeCloseNodesTable(r.closeNodes)
-        true
+      case exp: Throwable => {
+        log.error("Unknown exception", exp)
+        false
       }
     }
-    false // This shouldn't happen
   }
 
   /**
@@ -121,6 +127,7 @@ class Main(name : String,id:Int) extends Actor {
     // we take as a reference the current node, we only have to retrieve the n first elements of the list without the excluded nodes
     val currentCloseNodes = closeNodes.filterNot(excluded contains)
     val partition = currentCloseNodes.splitAt(numberOfNodes)
+    val test = isAwake(partition._1.head)
     var awakeCloseNodes = partition._1.filter(isAwake) // we test all the nodes, some dead note are possibly filtered
     var remainingCloseNodes = partition._2
 
