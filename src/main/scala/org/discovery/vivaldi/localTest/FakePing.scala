@@ -38,7 +38,6 @@ object FakePing {
   var idNetwork = 0
   val contentType = Map("content-type" -> "application/json")
   val urlMonitoring = "http://vivaldi-monitoring-demo.herokuapp.com/"
-
   /**
    * Creates the table of pings from given coordinates
    * @param coordinates
@@ -154,23 +153,6 @@ class FakePing(id:Long, core:ActorRef, main:ActorRef) extends Communication(id, 
 }
 
 class FakeMain(name : String, id : Long) extends VivaldiActor(name, id) {
-
-  /**
-   * Calls monitoring to update coordinates
-   */
-  override def updateMonitoring = {
-    val x = coordinates.x
-    val y = coordinates.y
-    val bodyUpdate = s"""{"nodeId": $name, "x": $x, "y": $y}"""
-    val requestInit = url("http://vivaldi-monitoring-demo.herokuapp.com/coordinates/").POST << bodyUpdate <:< Map("content-type" -> "application/json")
-    val resultInit = Http(requestInit OK as.String).either
-    resultInit() match {
-      case Right(content)         => log.info("Update coordinates on monitoring "+content)
-      case Left(StatusCode(404))  => log.error("Not found")
-      case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
-      case _ => log.error("Error")
-    }
-  }
 
   override val vivaldiCore = context.actorOf(Props(classOf[ComputingAlgorithm], self, deltaConf), "VivaldiCore"+id)
   override val network = context.actorOf(Props(classOf[FakePing], id, vivaldiCore, self), "Network"+id)

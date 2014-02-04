@@ -52,6 +52,45 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
   val configInit = config.getConfig("init")
   val numberOfCloseNodes = config.getInt("closeNodes.size")
 
+  val monitoringActivated : Boolean = context.system.settings.config.getBoolean("vivaldi.system.monitoring.activated")
+
+  /**
+   * Called when the actor is created
+   */
+  override def preStart() {
+    if (monitoringActivated){
+      createNetwork
+      initializeNode
+    }
+  }
+
+  def createNetwork = {
+
+  }
+
+  def initializeNode = {
+
+  }
+
+  /**
+   * Calls monitoring to update coordinates
+   */
+  def updateMonitoring = {
+    if (monitoringActivated) {
+      val x = coordinates.x
+      val y = coordinates.y
+      val bodyUpdate = s"""{"nodeId": $name, "x": $x, "y": $y}"""
+      val requestInit = url("http://vivaldi-monitoring-demo.herokuapp.com/coordinates/").POST << bodyUpdate <:< Map("content-type" -> "application/json")
+      val resultInit = Http(requestInit OK as.String).either
+      resultInit() match {
+        case Right(content)         => log.info("Update coordinates on monitoring "+content)
+        case Left(StatusCode(404))  => log.error("Not found")
+        case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
+        case _ => log.error("Error")
+      }
+    }
+  }
+
   /**
    * Method that handles the oncoming messages
    * @return
@@ -140,7 +179,6 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
     log.info(s"[TICK] coordinate: ${newCoordinates}, rps: ${rpsIterable.toList}, closeNodes: ${closeNodes.toList}")
   }
 
-  def updateMonitoring = {}
   /**
    * Method to compute the distance between the current node and the node in parameter
    * @param externCoordinates to compute the distance from
