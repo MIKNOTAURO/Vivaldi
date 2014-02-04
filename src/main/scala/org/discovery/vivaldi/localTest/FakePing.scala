@@ -58,19 +58,6 @@ object FakePing {
     //Call monitoring to create network
     pingTable = createTable(coordinates)
     val system = ActorSystem("testSystem")
-    val bodySystem = """{"networkName": "france"}"""
-    val requestNetwork = url(urlMonitoring+"networks/").POST << bodySystem <:< contentType
-    val resultNetwork = Http(requestNetwork OK as.String).either
-    var responseNetwork = ""
-    resultNetwork() match {
-      case Right(content)         => responseNetwork = content
-      case Left(StatusCode(404))  => log.error("Not found")
-      case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
-      case _ => log.error("Error")
-    }
-    idNetwork = JSON.parseFull(responseNetwork).get.asInstanceOf[Map[String, Any]]
-      .get("id").get.asInstanceOf[Double].toInt
-    log.info(s"Id network : $idNetwork")
 
     //Create nodes
     coordinates.zip(0 until coordinates.length).map({

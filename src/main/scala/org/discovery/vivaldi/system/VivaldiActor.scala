@@ -73,6 +73,44 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
 
   def createNetwork = {
 
+    var networkExists = false
+
+    val getNetworks = url(urlMonitoring+"networks/").GET
+    val resultGetNetworks = Http(getNetworks OK as.String).either
+    var responseGetNetworks = ""
+    resultGetNetworks() match {
+      case Right(content)         => responseGetNetworks = content
+      case Left(StatusCode(404))  => log.error("Not found")
+      case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
+      case _ => log.error("Error")
+    }
+    val jsonList = JSON.parseFull(responseGetNetworks).get.asInstanceOf[List[Map[String, Any]]]
+    log.info(jsonList.toString())
+    for (item <- jsonList){
+      val name = item.get("networkName").get.asInstanceOf[String]
+      if (name == networkName){
+        networkExists = true
+        networkId = item.get("id").get.asInstanceOf[Integer]
+      }
+    }
+
+    if (!networkExists) {
+      log.info("coucou")
+      val bodySystem = s"""{"networkName": "$networkName"}"""
+      val requestNetwork = url(urlMonitoring+"networks/").POST << bodySystem <:< contentType
+      val resultNetwork = Http(requestNetwork OK as.String).either
+      var responseNetwork = ""
+      resultNetwork() match {
+        case Right(content)         => responseNetwork = content
+        case Left(StatusCode(404))  => log.error("Not found")
+        case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
+        case _ => log.error("Error")
+      }
+      networkId = JSON.parseFull(responseNetwork).get.asInstanceOf[Map[String, Any]]
+        .get("id").get.asInstanceOf[Double].toInt
+      log.info(s"Id network : $networkId")
+    }
+
   }
 
   def initializeNode = {
