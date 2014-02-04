@@ -132,6 +132,9 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
     //Adding new Nodes
     closeNodes = RPSCloseNodesToAdd ++ closeNodes
 
+    // Update distances
+    closeNodes = closeNodes.map(cni => CloseNodeInfo(cni.id, cni.node, cni.coordinates, computeDistanceToSelf(cni.coordinates)))
+
     closeNodes = closeNodes.sorted.take(numberOfCloseNodes)
 
     log.info(s"[TICK] coordinate: ${newCoordinates}, rps: ${rpsIterable.toList}, closeNodes: ${closeNodes.toList}")
