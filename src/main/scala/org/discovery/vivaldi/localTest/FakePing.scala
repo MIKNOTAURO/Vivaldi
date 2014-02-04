@@ -75,33 +75,6 @@ object FakePing {
     //Create nodes
     coordinates.zip(0 until coordinates.length).map({
       case (coordinate,id) => {
-        //call monitoring to create nodes
-        val nodeName = coordinate._2
-        val bodyRegister = s"""{"nodeName": "$nodeName", "networkId": $idNetwork}"""
-        log.info(bodyRegister)
-        val requestRegister = url(urlMonitoring+"nodes/").POST << bodyRegister <:< contentType
-        val resultRegister = Http(requestRegister OK as.String).either
-        var responseRegister = ""
-        resultRegister() match {
-          case Right(content)         => responseRegister = content
-          case Left(StatusCode(404))  => log.error("Not found")
-          case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
-          case _ => log.error("Error")
-        }
-        val idNode = JSON.parseFull(responseRegister).get.asInstanceOf[Map[String, Any]]
-          .get("id").get.asInstanceOf[Double].toInt
-        log.info(s"Id node : $idNode")
-
-        //call monitoring to initialize node
-        val bodyInit = s"""{"nodeId": $idNode}"""
-        val requestInit = url(urlMonitoring+"initTimes/").POST << bodyInit <:< contentType
-        val resultInit = Http(requestInit OK as.String).either
-        resultInit() match {
-          case Right(content)         => log.info(s"Node $idNode initialized")
-          case Left(StatusCode(404))  => log.error("Not found")
-          case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
-          case _ => log.error("Error")
-        }
 
         //create actorRef representing the node
         system.actorOf(Props(classOf[FakeMain], idNode.toString, id.toLong))
