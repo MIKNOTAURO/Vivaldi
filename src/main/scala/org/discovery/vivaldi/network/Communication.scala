@@ -37,20 +37,20 @@ import org.discovery.vivaldi.dto.RPSInfo
  * limitations under the License.
  * ============================================================ */
 
+/**
+ * A trait used to tag messages that need to be forwarded to the Communication actor
+ */
+trait CommunicationMessage
 
-object Communication {
-
+object Communication{
   // Ping/Pong are used in the RPS update process, to measure ping and recover new RPSs
-  case class Ping(sendTime: Long, selfInfo: RPSInfo)
-
-  case class Pong(sendTime: Long, selfInfo: RPSInfo,  rps: Set[RPSInfo])
-
+  case class Ping(sendTime: Long, selfInfo: RPSInfo) extends CommunicationMessage
+  case class Pong(sendTime: Long,selfInfo: RPSInfo,rps: Iterable[RPSInfo]) extends CommunicationMessage
   //NewRPS is used to update the RPS (in the "mix RPS" phase)
-  case class NewRPS(rps: Set[RPSInfo])
-
+  case class NewRPS(rps: Set[RPSInfo]) extends CommunicationMessage
 }
 
-class Communication(vivaldiCore: ActorRef, main: ActorRef,id:Int=0) extends Actor {
+class Communication(id: Long, vivaldiCore: ActorRef, main: ActorRef) extends Actor {
 
   val log = Logging(context.system, this)
 
@@ -62,19 +62,20 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef,id:Int=0) extends Acto
   implicit val pingTimeout = Timeout(5 seconds)
 
   //TODO set systemInfo
-  var myInfo: RPSInfo = RPSInfo(self, Coordinates(0, 0), 23, this.id) //the ping in myInfo isn't used , so using as a "source" id
+  var myInfo:RPSInfo = RPSInfo(id, self,Coordinates(0,0),23)//the ping in myInfo isn't used
 
 
   def receive = {
+
     case ping: Ping => receivePing(ping)
-    case DoRPSRequest(newInfo: RPSInfo, numberOfNodesToContact) => {
-      myInfo = newInfo // we use RPSInfo to propagate new systemInfo and coordinates
+    case DoRPSRequest(newInfo: RPSInfo,numberOfNodesToContact) => {
+      myInfo = newInfo  // we use RPSInfo to propagate new systemInfo and coordinates
       contactNodes(numberOfNodesToContact)
     }
-    case FirstContact(node) => rps = Set(RPSInfo(node, Coordinates(0, 0), 1000000, this.id)) // I don't know the system information here
+    case FirstContact(node) => rps = Set(RPSInfo(id, node,Coordinates(11,11),1000000))
     case NewRPS(newRPS) => rps = newRPS
-    case unknownMessage => {
-      log.error("Unknown message:"+unknownMessage)
+    case msg => {
+      log.info(s"Unknown Message: $msg")
     }
   }
 
@@ -97,10 +98,11 @@ class Communication(vivaldiCore: ActorRef, main: ActorRef,id:Int=0) extends Acto
   }
 
   def contactNodes(numberOfNodesToContact: Int) {
+    log.debug(s"Order to contact $numberOfNodesToContact received")
     val toContact = rps.take(Math.min(rps.size, numberOfNodesToContact))
     val asks = toContact map askPing
 
-    val updatedAsks: Set[Future[Pong]] = asks.map {
+    val updatedAsks: Iterable[Future[Pong]] = asks.map {
       ask =>
         for {
           result <- ask

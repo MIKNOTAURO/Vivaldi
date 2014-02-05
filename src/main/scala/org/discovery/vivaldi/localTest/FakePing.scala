@@ -2,7 +2,7 @@ package org.discovery.vivaldi.local
 
 import akka.actor.{ActorSystem, Props, ActorRef}
 import org.discovery.vivaldi.dto.{FirstContact, RPSInfo, Coordinates}
-import org.discovery.vivaldi.system.Main
+import org.discovery.vivaldi.system.{VivaldiActor}
 import org.discovery.vivaldi.core.ComputingAlgorithm
 import org.discovery.vivaldi.network.Communication
 import dispatch._
@@ -38,7 +38,6 @@ object FakePing {
   var idNetwork = 0
   val contentType = Map("content-type" -> "application/json")
   val urlMonitoring = "http://vivaldi-monitoring-demo.herokuapp.com/"
-
   /**
    * Creates the table of pings from given coordinates
    * @param coordinates
@@ -59,53 +58,12 @@ object FakePing {
     //Call monitoring to create network
     pingTable = createTable(coordinates)
     val system = ActorSystem("testSystem")
-    val bodySystem = """{"networkName": "france2"}"""
-    val requestNetwork = url(urlMonitoring+"networks/").POST << bodySystem <:< contentType
-    val resultNetwork = Http(requestNetwork OK as.String).either
-    var responseNetwork = ""
-    resultNetwork() match {
-      case Right(content)         => responseNetwork = content
-      case Left(StatusCode(404))  => log.error("Not found")
-      case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
-      case _ => log.error("Error")
-    }
-    idNetwork = JSON.parseFull(responseNetwork).get.asInstanceOf[Map[String, Any]]
-      .get("id").get.asInstanceOf[Double].toInt
-    log.info(s"Id network : $idNetwork")
 
     //Create nodes
     coordinates.zip(0 until coordinates.length).map({
       case (coordinate,id) => {
-        //call monitoring to create nodes
-        val nodeName = coordinate._2
-        val bodyRegister = s"""{"nodeName": "$nodeName", "networkId": $idNetwork}"""
-        log.info(bodyRegister)
-        val requestRegister = url(urlMonitoring+"nodes/").POST << bodyRegister <:< contentType
-        val resultRegister = Http(requestRegister OK as.String).either
-        var responseRegister = ""
-        resultRegister() match {
-          case Right(content)         => responseRegister = content
-          case Left(StatusCode(404))  => log.error("Not found")
-          case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
-          case _ => log.error("Error")
-        }
-        val idNode = JSON.parseFull(responseRegister).get.asInstanceOf[Map[String, Any]]
-          .get("id").get.asInstanceOf[Double].toInt
-        log.info(s"Id node : $idNode")
-
-        //call monitoring to initialize node
-        val bodyInit = s"""{"nodeId": $idNode}"""
-        val requestInit = url(urlMonitoring+"initTimes/").POST << bodyInit <:< contentType
-        val resultInit = Http(requestInit OK as.String).either
-        resultInit() match {
-          case Right(content)         => log.info(s"Node $idNode initialized")
-          case Left(StatusCode(404))  => log.error("Not found")
-          case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
-          case _ => log.error("Error")
-        }
-
         //create actorRef representing the node
-        system.actorOf(Props(classOf[FakeMain], idNode.toString, id))
+        system.actorOf(Props(classOf[FakeMain], coordinate._2, id.toLong))
       }
     })
   }
@@ -138,7 +96,7 @@ object FakePing {
 }
 
 
-class FakePing(core:ActorRef,main:ActorRef,id:Integer) extends Communication(core,main,id) {
+class FakePing(id:Long, core:ActorRef, main:ActorRef) extends Communication(id, core, main) {
 
   /**
    * Gives the ping from the ping table created in the function createTable
@@ -147,33 +105,16 @@ class FakePing(core:ActorRef,main:ActorRef,id:Integer) extends Communication(cor
    * @return
    */
    override def calculatePing(sendTime:Long,otherInfo:RPSInfo):Long={
-    var ping = FakePing.pingTable(this.id)(otherInfo.id)
+    var ping = FakePing.pingTable(this.id.toInt)(otherInfo.id.toInt)
     ping += Random.nextDouble()/10*Math.pow(-1, Random.nextInt(10))*ping
     ping.toLong
    }
 }
 
-class FakeMain(name : String, id : Int) extends Main(name, id) {
-
-  /**
-   * Calls monitoring to update coordinates
-   */
-  override def updateMonitoring = {
-    val x = coordinates.x
-    val y = coordinates.y
-    val bodyUpdate = s"""{"nodeId": $name, "x": $x, "y": $y}"""
-    val requestInit = url("http://vivaldi-monitoring-demo.herokuapp.com/coordinates/").POST << bodyUpdate <:< Map("content-type" -> "application/json")
-    val resultInit = Http(requestInit OK as.String).either
-    resultInit() match {
-      case Right(content)         => log.info("Update coordinates on monitoring "+content)
-      case Left(StatusCode(404))  => log.error("Not found")
-      case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
-      case _ => log.error("Error")
-    }
-  }
+class FakeMain(name : String, id : Long) extends VivaldiActor(name, id) {
 
   override val vivaldiCore = context.actorOf(Props(classOf[ComputingAlgorithm], self, deltaConf), "VivaldiCore"+id)
-  override val network = context.actorOf(Props(classOf[FakePing], vivaldiCore, self, id), "Network"+id)
+  override val network = context.actorOf(Props(classOf[FakePing], id, vivaldiCore, self), "Network"+id)
 
 }
 
