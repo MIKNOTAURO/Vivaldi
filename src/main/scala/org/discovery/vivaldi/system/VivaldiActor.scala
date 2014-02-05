@@ -289,9 +289,6 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
   val numberOfNodesCalled = configInit.getInt("numberOfNodesCalled")
   val changeTime =  configInit.getInt("changeTime")
 
-  var numberOfCalls = 0
-
-  val myInfo = RPSInfo(this.id, this.network, coordinates, 1067) // TODO Fix that
 
   /**
    *  Creates a scheduler
