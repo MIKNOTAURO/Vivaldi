@@ -59,7 +59,6 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
   val contentType = Map("content-type" -> "application/json")
   val networkName : String = context.system.settings.config.getString("vivaldi.system.monitoring.network")
   var networkId : Integer = 0
-  var idMonitoring : Integer = 0
 
   /**
    * Called when the actor is created
@@ -115,9 +114,9 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
   def initializeNode = {
 
     //call monitoring to create nodes
-    val bodyRegister = s"""{"nodeName": "$name", "networkId": $networkId}"""
+    val bodyRegister = s"""{"nodeName": "$name", "networkId": $networkId, "id": $id}"""
     log.info(bodyRegister)
-    val requestRegister = url(urlMonitoring+"nodes/").POST << bodyRegister <:< contentType
+    val requestRegister = url(urlMonitoring+"nodes/withId").POST << bodyRegister <:< contentType
     val resultRegister = Http(requestRegister OK as.String).either
     var responseRegister = ""
     resultRegister() match {
@@ -126,16 +125,13 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
       case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
       case _ => log.error("Error")
     }
-    idMonitoring = JSON.parseFull(responseRegister).get.asInstanceOf[Map[String, Any]]
-      .get("id").get.asInstanceOf[Double].toInt
-    log.info(s"Id node : $idMonitoring")
 
     //call monitoring to initialize node
-    val bodyInit = s"""{"nodeId": $idMonitoring}"""
+    val bodyInit = s"""{"nodeId": $id}"""
     val requestInit = url(urlMonitoring+"initTimes/").POST << bodyInit <:< contentType
     val resultInit = Http(requestInit OK as.String).either
     resultInit() match {
-      case Right(content)         => log.info(s"Node $idMonitoring initialized")
+      case Right(content)         => log.info(s"Node $id initialized")
       case Left(StatusCode(404))  => log.error("Not found")
       case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
       case _ => log.error("Error")
@@ -150,11 +146,30 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
     if (monitoringActivated) {
       val x = coordinates.x
       val y = coordinates.y
-      val bodyUpdate = s"""{"nodeId": $idMonitoring, "x": $x, "y": $y}"""
+      val bodyUpdate = s"""{"nodeId": $id, "x": $x, "y": $y}"""
       val requestInit = url(urlMonitoring+"coordinates/").POST << bodyUpdate <:< contentType
       val resultInit = Http(requestInit OK as.String).either
       resultInit() match {
         case Right(content)         => log.info("Update coordinates on monitoring "+content)
+        case Left(StatusCode(404))  => log.error("Not found")
+        case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
+        case _ => log.error("Error")
+      }
+    }
+  }
+
+  def updateCloseNodesMonitoring = {
+    if (monitoringActivated) {
+      var json = "["
+      for (closeNode <- closeNodes) {
+        json += s"""{"localNodeId": $id, "distantNodeId": ${closeNode.id}, "distance": ${closeNode.distanceFromSelf}}""" +","
+      }
+      json = json.dropRight(1)
+      json += "]"
+      val requestCloseNodes = url(urlMonitoring+"closeNodes/list").POST << json <:< contentType
+      val resultCloseNodes = Http(requestCloseNodes OK as.String).either
+      resultCloseNodes() match {
+        case Right(content)         => log.info(s"Update close nodes of node $id")
         case Left(StatusCode(404))  => log.error("Not found")
         case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
         case _ => log.error("Error")
@@ -246,6 +261,8 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
     closeNodes = closeNodes.map(cni => CloseNodeInfo(cni.id, cni.node, cni.coordinates, computeDistanceToSelf(cni.coordinates)))
 
     closeNodes = closeNodes.sorted.take(numberOfCloseNodes)
+
+    updateCloseNodesMonitoring
 
     log.info(s"[TICK] coordinate: ${newCoordinates}, rps: ${rpsIterable.toList}, closeNodes: ${closeNodes.toList}")
   }
