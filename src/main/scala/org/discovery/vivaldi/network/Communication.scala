@@ -39,6 +39,9 @@ import java.io.{InputStreamReader, BufferedReader}
  * limitations under the License.
  * ============================================================ */
 
+/**
+ * A trait used to tag messages that need to be forwarded to the Communication actor
+ */
 trait CommunicationMessage
 
 object Communication{
@@ -71,7 +74,7 @@ class Communication(id: Long, vivaldiCore: ActorRef, main: ActorRef) extends Act
       myInfo = newInfo  // we use RPSInfo to propagate new systemInfo and coordinates
       contactNodes(numberOfNodesToContact)
     }
-    case FirstContact(node) => rps = Set(RPSInfo(id, node,null,1000000))// I don't know the system information here
+    case FirstContact(node) => rps = Set(RPSInfo(id, node,Coordinates(11,11),1000000))
     case NewRPS(newRPS) => rps = newRPS
     case msg => {
       log.info(s"Unknown Message: $msg")

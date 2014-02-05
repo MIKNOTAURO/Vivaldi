@@ -3,7 +3,6 @@ package org.discovery.vivaldi
 import akka.event.slf4j.Logger
 import akka.actor.{Props, ActorSystem}
 import org.discovery.vivaldi.system.VivaldiActor
-import java.io.{InputStreamReader, BufferedReader}
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -26,22 +25,12 @@ import java.io.{InputStreamReader, BufferedReader}
 
 object Vivaldi {
 
-//  val log = Logger("Primary")
-
   def main(args: Array[String]) = {
 
-    val shellCmd: Array[String] = Array(
-      "/bin/sh",
-      "-c",
-      "ping -c 1 google.fr | grep -e 'time=.*ms' | sed 's/^.*time=//g' | sed 's/ ms//g'"
-    );
+    val akkaSystem = ActorSystem("Vivaldi")
 
-    val runtime: Runtime = Runtime.getRuntime()
-    val p:Process = runtime.exec(shellCmd)
+    val system = akkaSystem.actorOf(Props(new VivaldiActor("1", 1)), "System")
 
-    var in: BufferedReader = new BufferedReader(new InputStreamReader(p.getInputStream()))
-    var result: String = in.readLine()
-    println(result.toDouble)
   }
 
 }
