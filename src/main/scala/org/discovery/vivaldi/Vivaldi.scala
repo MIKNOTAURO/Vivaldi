@@ -25,15 +25,12 @@ import org.discovery.vivaldi.system.VivaldiActor
 
 object Vivaldi {
 
-//  val log = Logger("Primary")
-
   def main(args: Array[String]) = {
 
     val akkaSystem = ActorSystem("Vivaldi")
 
     val system = akkaSystem.actorOf(Props(new VivaldiActor("1", 1)), "System")
 
-//    log.info("coucous")
   }
 
 }
