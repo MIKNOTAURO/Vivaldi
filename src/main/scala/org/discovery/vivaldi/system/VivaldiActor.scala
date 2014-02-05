@@ -16,14 +16,6 @@ import net.liftweb.json.JsonDSL._
 import net.liftweb.json.Printer._
 import scala.Some
 import dispatch.StatusCode
-import org.discovery.vivaldi.dto.CloseNodeInfo
-import org.discovery.vivaldi.dto.Coordinates
-import org.discovery.vivaldi.dto.DoRPSRequest
-import org.discovery.vivaldi.dto.UpdatedCoordinates
-import org.discovery.vivaldi.dto.DeleteCloseNode
-import org.discovery.vivaldi.dto.NextNodesFrom
-import org.discovery.vivaldi.dto.NextNodesToSelf
-import org.discovery.vivaldi.dto.RPSInfo
 
 /* ============================================================
  * Discovery Project - AkkaArc
