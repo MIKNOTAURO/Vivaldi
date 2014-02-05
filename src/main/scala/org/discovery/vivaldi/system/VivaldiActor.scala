@@ -277,11 +277,6 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
     closeNodes = closeNodes.filterNot(_.node.path == nodeToDelete.node.path)
   }
 
-  def initSystem(){
-
-  }
-
-  case class CountCalls();
 
   val firstCallTime = configInit.getInt("firstCallTime")
   val timeBetweenCallsFirst = configInit.getInt("timeBetweenCallsFirst")
