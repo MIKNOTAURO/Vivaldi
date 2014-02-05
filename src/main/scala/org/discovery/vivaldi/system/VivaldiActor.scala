@@ -14,9 +14,11 @@ import org.discovery.vivaldi.dto.DoRPSRequest
 import org.discovery.vivaldi.dto.CloseNodeInfo
 import org.discovery.vivaldi.dto.RPSInfo
 import org.discovery.vivaldi.dto.UpdatedCoordinates
-import org.discovery.vivaldi.network.Communication.Ping
 import dispatch._
 import scala.util.parsing.json.JSON
+import net.liftweb.json.{JObject, JsonAST}
+import net.liftweb.json.JsonDSL._
+import net.liftweb.json.Printer._
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -58,7 +60,7 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
   val urlMonitoring : String = context.system.settings.config.getString("vivaldi.system.monitoring.url")
   val contentType = Map("content-type" -> "application/json")
   val networkName : String = context.system.settings.config.getString("vivaldi.system.monitoring.network")
-  var networkId : Integer = 0
+  var networkId : Int = 0
 
   /**
    * Called when the actor is created
@@ -114,7 +116,8 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
   def initializeNode = {
 
     //call monitoring to create nodes
-    val bodyRegister = s"""{"nodeName": "$name", "networkId": $networkId, "id": $id}"""
+    val jsonRegister = ("nodeName" -> name) ~ ("networkId" -> networkId) ~ ("id" -> id.toInt)
+    val bodyRegister = compact(JsonAST.render(jsonRegister))
     log.info(bodyRegister)
     val requestRegister = url(urlMonitoring+"nodes/withId").POST << bodyRegister <:< contentType
     val resultRegister = Http(requestRegister OK as.String).either
@@ -127,7 +130,8 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
     }
 
     //call monitoring to initialize node
-    val bodyInit = s"""{"nodeId": $id}"""
+    val jsonInit = ("nodeId" -> id)
+    val bodyInit = compact(JsonAST.render(jsonInit))
     val requestInit = url(urlMonitoring+"initTimes/").POST << bodyInit <:< contentType
     val resultInit = Http(requestInit OK as.String).either
     resultInit() match {
@@ -146,7 +150,8 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
     if (monitoringActivated) {
       val x = coordinates.x
       val y = coordinates.y
-      val bodyUpdate = s"""{"nodeId": $id, "x": $x, "y": $y}"""
+      val jsonUpdate = ("nodeId" -> id) ~ ("x" -> x) ~ ("y" -> y)
+      val bodyUpdate = compact(JsonAST.render(jsonUpdate))
       val requestInit = url(urlMonitoring+"coordinates/").POST << bodyUpdate <:< contentType
       val resultInit = Http(requestInit OK as.String).either
       resultInit() match {
@@ -160,12 +165,11 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
 
   def updateCloseNodesMonitoring = {
     if (monitoringActivated) {
-      var json = "["
+      var jsonList : List[JObject] = List()
       for (closeNode <- closeNodes) {
-        json += s"""{"localNodeId": $id, "distantNodeId": ${closeNode.id}, "distance": ${closeNode.distanceFromSelf}}""" +","
+        jsonList ::= ("localNodeId" -> id) ~ ("distantNodeId" -> closeNode.id) ~ ("distance" -> closeNode.distanceFromSelf)
       }
-      json = json.dropRight(1)
-      json += "]"
+      val json = compact(JsonAST.render(jsonList))
       val requestCloseNodes = url(urlMonitoring+"closeNodes/list").POST << json <:< contentType
       val resultCloseNodes = Http(requestCloseNodes OK as.String).either
       resultCloseNodes() match {
