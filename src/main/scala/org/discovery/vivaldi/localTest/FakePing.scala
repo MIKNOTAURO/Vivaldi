@@ -63,7 +63,7 @@ object FakePing {
     coordinates.zip(0 until coordinates.length).map({
       case (coordinate,id) => {
         //create actorRef representing the node
-        system.actorOf(Props(classOf[FakeMain], id.toString, id.toLong))
+        system.actorOf(Props(classOf[FakeMain], coordinate._2, id.toLong))
       }
     })
   }

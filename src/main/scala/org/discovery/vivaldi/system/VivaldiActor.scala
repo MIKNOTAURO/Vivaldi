@@ -90,12 +90,11 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
       val name = item.get("networkName").get.asInstanceOf[String]
       if (name == networkName){
         networkExists = true
-        networkId = item.get("id").get.asInstanceOf[Integer]
+        networkId = item.get("id").get.asInstanceOf[Double].toInt
       }
     }
 
     if (!networkExists) {
-      log.info("coucou")
       val bodySystem = s"""{"networkName": "$networkName"}"""
       val requestNetwork = url(urlMonitoring+"networks/").POST << bodySystem <:< contentType
       val resultNetwork = Http(requestNetwork OK as.String).either
@@ -116,8 +115,7 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
   def initializeNode = {
 
     //call monitoring to create nodes
-    val nodeName = name
-    val bodyRegister = s"""{"nodeName": "$nodeName", "networkId": $networkId}"""
+    val bodyRegister = s"""{"nodeName": "$name", "networkId": $networkId}"""
     log.info(bodyRegister)
     val requestRegister = url(urlMonitoring+"nodes/").POST << bodyRegister <:< contentType
     val resultRegister = Http(requestRegister OK as.String).either
@@ -152,8 +150,8 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
     if (monitoringActivated) {
       val x = coordinates.x
       val y = coordinates.y
-      val bodyUpdate = s"""{"nodeId": $name, "x": $x, "y": $y}"""
-      val requestInit = url("http://vivaldi-monitoring-demo.herokuapp.com/coordinates/").POST << bodyUpdate <:< Map("content-type" -> "application/json")
+      val bodyUpdate = s"""{"nodeId": $idMonitoring, "x": $x, "y": $y}"""
+      val requestInit = url(urlMonitoring+"coordinates/").POST << bodyUpdate <:< contentType
       val resultInit = Http(requestInit OK as.String).either
       resultInit() match {
         case Right(content)         => log.info("Update coordinates on monitoring "+content)
