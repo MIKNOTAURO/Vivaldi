@@ -9,25 +9,11 @@ import org.discovery.vivaldi.network.{CommunicationMessage, Communication}
 import scala.math._
 import scala.concurrent.ExecutionContext
 import ExecutionContext.Implicits.global
-import org.discovery.vivaldi.dto.Coordinates
-import org.discovery.vivaldi.dto.DoRPSRequest
-import org.discovery.vivaldi.dto.CloseNodeInfo
-import org.discovery.vivaldi.dto.RPSInfo
-import org.discovery.vivaldi.dto.UpdatedCoordinates
 import dispatch._
 import scala.util.parsing.json.JSON
 import net.liftweb.json.{JObject, JsonAST}
 import net.liftweb.json.JsonDSL._
 import net.liftweb.json.Printer._
-import scala.Some
-import org.discovery.vivaldi.dto.CloseNodeInfo
-import org.discovery.vivaldi.dto.Coordinates
-import org.discovery.vivaldi.dto.DoRPSRequest
-import org.discovery.vivaldi.dto.UpdatedCoordinates
-import org.discovery.vivaldi.dto.DeleteCloseNode
-import org.discovery.vivaldi.dto.NextNodesFrom
-import org.discovery.vivaldi.dto.NextNodesToSelf
-import org.discovery.vivaldi.dto.RPSInfo
 import scala.Some
 import dispatch.StatusCode
 import org.discovery.vivaldi.dto.CloseNodeInfo
