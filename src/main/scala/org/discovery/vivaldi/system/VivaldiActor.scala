@@ -19,6 +19,25 @@ import scala.util.parsing.json.JSON
 import net.liftweb.json.{JObject, JsonAST}
 import net.liftweb.json.JsonDSL._
 import net.liftweb.json.Printer._
+import scala.Some
+import org.discovery.vivaldi.dto.CloseNodeInfo
+import org.discovery.vivaldi.dto.Coordinates
+import org.discovery.vivaldi.dto.DoRPSRequest
+import org.discovery.vivaldi.dto.UpdatedCoordinates
+import org.discovery.vivaldi.dto.DeleteCloseNode
+import org.discovery.vivaldi.dto.NextNodesFrom
+import org.discovery.vivaldi.dto.NextNodesToSelf
+import org.discovery.vivaldi.dto.RPSInfo
+import scala.Some
+import dispatch.StatusCode
+import org.discovery.vivaldi.dto.CloseNodeInfo
+import org.discovery.vivaldi.dto.Coordinates
+import org.discovery.vivaldi.dto.DoRPSRequest
+import org.discovery.vivaldi.dto.UpdatedCoordinates
+import org.discovery.vivaldi.dto.DeleteCloseNode
+import org.discovery.vivaldi.dto.NextNodesFrom
+import org.discovery.vivaldi.dto.NextNodesToSelf
+import org.discovery.vivaldi.dto.RPSInfo
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -96,16 +115,9 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
     }
 
     if (!networkExists) {
-      val bodySystem = s"""{"networkName": "$networkName"}"""
-      val requestNetwork = url(urlMonitoring+"networks/").POST << bodySystem <:< contentType
-      val resultNetwork = Http(requestNetwork OK as.String).either
-      var responseNetwork = ""
-      resultNetwork() match {
-        case Right(content)         => responseNetwork = content
-        case Left(StatusCode(404))  => log.error("Not found")
-        case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
-        case _ => log.error("Error")
-      }
+      val jsonSystem = ("networkName" -> networkName)
+      val bodySystem = compact(JsonAST.render(jsonSystem))
+      val responseNetwork = makePostRequest(bodySystem, "networks/")
       networkId = JSON.parseFull(responseNetwork).get.asInstanceOf[Map[String, Any]]
         .get("id").get.asInstanceOf[Double].toInt
       log.info(s"Id network : $networkId")
@@ -119,27 +131,12 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
     val jsonRegister = ("nodeName" -> name) ~ ("networkId" -> networkId) ~ ("id" -> id.toInt)
     val bodyRegister = compact(JsonAST.render(jsonRegister))
     log.info(bodyRegister)
-    val requestRegister = url(urlMonitoring+"nodes/withId").POST << bodyRegister <:< contentType
-    val resultRegister = Http(requestRegister OK as.String).either
-    var responseRegister = ""
-    resultRegister() match {
-      case Right(content)         => responseRegister = content
-      case Left(StatusCode(404))  => log.error("Not found")
-      case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
-      case _ => log.error("Error")
-    }
+    makePostRequest(bodyRegister, "nodes/withId")
 
     //call monitoring to initialize node
     val jsonInit = ("nodeId" -> id)
     val bodyInit = compact(JsonAST.render(jsonInit))
-    val requestInit = url(urlMonitoring+"initTimes/").POST << bodyInit <:< contentType
-    val resultInit = Http(requestInit OK as.String).either
-    resultInit() match {
-      case Right(content)         => log.info(s"Node $id initialized")
-      case Left(StatusCode(404))  => log.error("Not found")
-      case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
-      case _ => log.error("Error")
-    }
+    makePostRequest(bodyInit, "initTimes/")
 
   }
 
@@ -152,14 +149,7 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
       val y = coordinates.y
       val jsonUpdate = ("nodeId" -> id) ~ ("x" -> x) ~ ("y" -> y)
       val bodyUpdate = compact(JsonAST.render(jsonUpdate))
-      val requestInit = url(urlMonitoring+"coordinates/").POST << bodyUpdate <:< contentType
-      val resultInit = Http(requestInit OK as.String).either
-      resultInit() match {
-        case Right(content)         => log.info("Update coordinates on monitoring "+content)
-        case Left(StatusCode(404))  => log.error("Not found")
-        case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
-        case _ => log.error("Error")
-      }
+      makePostRequest(bodyUpdate, "coordinates/")
     }
   }
 
@@ -170,15 +160,21 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
         jsonList ::= ("localNodeId" -> id) ~ ("distantNodeId" -> closeNode.id) ~ ("distance" -> closeNode.distanceFromSelf)
       }
       val json = compact(JsonAST.render(jsonList))
-      val requestCloseNodes = url(urlMonitoring+"closeNodes/list").POST << json <:< contentType
-      val resultCloseNodes = Http(requestCloseNodes OK as.String).either
-      resultCloseNodes() match {
-        case Right(content)         => log.info(s"Update close nodes of node $id")
-        case Left(StatusCode(404))  => log.error("Not found")
-        case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
-        case _ => log.error("Error")
-      }
+      makePostRequest(json, "closeNodes/list")
     }
+  }
+
+  def makePostRequest(toSend : String, urlToSend : String) = {
+    val request = url(urlMonitoring+urlToSend).POST << toSend <:< contentType
+    val result = Http(request OK as.String).either
+    var toReturn = ""
+    result() match {
+      case Right(content)         => toReturn = content
+      case Left(StatusCode(404))  => log.error("Not found")
+      case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
+      case _ => log.error("Error")
+    }
+    toReturn
   }
 
   /**
