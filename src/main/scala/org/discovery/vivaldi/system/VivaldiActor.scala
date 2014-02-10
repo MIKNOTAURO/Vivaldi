@@ -317,6 +317,7 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
 
     closeNodes = closeNodes.sorted.take(numberOfCloseNodes)
 
+    updateCloseNodesMonitoring
 
     log.info(s"[TICK] coordinate: ${newCoordinates}, rps: ${rpsIterable.toList}, closeNodes: ${closeNodes.toList}")
   }
