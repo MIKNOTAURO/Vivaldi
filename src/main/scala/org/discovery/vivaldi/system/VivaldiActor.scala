@@ -9,6 +9,12 @@ import org.discovery.vivaldi.network.{CommunicationMessage, Communication}
 import scala.math._
 import scala.concurrent.ExecutionContext
 import ExecutionContext.Implicits.global
+import org.discovery.vivaldi.dto.Coordinates
+import org.discovery.vivaldi.dto.DoRPSRequest
+import org.discovery.vivaldi.dto.CloseNodeInfo
+import org.discovery.vivaldi.dto.RPSInfo
+import org.discovery.vivaldi.dto.UpdatedCoordinates
+import org.discovery.vivaldi.network.Communication.Ping
 import dispatch._
 import scala.util.parsing.json.JSON
 import net.liftweb.json.{JObject, JsonAST}
@@ -37,7 +43,7 @@ import dispatch.StatusCode
  * ============================================================ */
 
 
-object Main {
+object VivaldiActor {
 
   case class AreYouAwake()
 
@@ -134,17 +140,14 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
     if (monitoringActivated) {
       val x = coordinates.x
       val y = coordinates.y
-      val jsonUpdate = ("nodeId" -> id) ~ ("x" -> x) ~ ("y" -> y)
-      val bodyUpdate = compact(JsonAST.render(jsonUpdate))
-      makePostRequest(bodyUpdate, "coordinates/")
-    }
-  }
-
-  def updateCloseNodesMonitoring = {
-    if (monitoringActivated) {
-      var jsonList : List[JObject] = List()
-      for (closeNode <- closeNodes) {
-        jsonList ::= ("localNodeId" -> id) ~ ("distantNodeId" -> closeNode.id) ~ ("distance" -> closeNode.distanceFromSelf)
+      val bodyUpdate = s"""{"nodeId": $idMonitoring, "x": $x, "y": $y}"""
+      val requestInit = url(urlMonitoring+"coordinates/").POST << bodyUpdate <:< contentType
+      val resultInit = Http(requestInit OK as.String).either
+      resultInit() match {
+        case Right(content)         => log.info("Update coordinates on monitoring "+content)
+        case Left(StatusCode(404))  => log.error("Not found")
+        case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
+        case _ => log.error("Error")
       }
       val json = compact(JsonAST.render(jsonList))
       makePostRequest(json, "closeNodes/list")
@@ -254,7 +257,7 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
    * @param numberOfNodes number of nodes to return. By default we return one node
    * @return a Sequence of the closest nodes
    */
-  @depricated 
+  @deprecated
   def getCloseNodesFrom(origin: nodeInfo, excluded: Set[nodeInfo] , numberOfNodes: Int ): Seq[nodeInfo] = {
       // we just have to compute the distances between the reference and the nodes in memory, sort them, and send the n closest without excluded nodes
       val relativeDistancesSeq = closeNodes.map(node => node.copy(distanceFromSelf = computeDistanceBtw(origin.coordinates,this.coordinates)))
