@@ -7,7 +7,7 @@ import scala.concurrent.duration._
 import org.discovery.vivaldi.dto._
 import org.discovery.vivaldi.network.{CommunicationMessage, Communication}
 import scala.math._
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{Await, ExecutionContext}
 import ExecutionContext.Implicits.global
 import org.discovery.vivaldi.dto.Coordinates
 import org.discovery.vivaldi.dto.DoRPSRequest
@@ -17,7 +17,10 @@ import org.discovery.vivaldi.dto.UpdatedCoordinates
 import org.discovery.vivaldi.network.Communication.Ping
 import dispatch._
 import scala.util.parsing.json.JSON
-
+import org.discovery.vivaldi.system.VivaldiActor._
+import akka.util.Timeout
+import akka.pattern.AskTimeoutException
+import akka.pattern.ask
 /* ============================================================
  * Discovery Project - AkkaArc
  * http://beyondtheclouds.github.io/
@@ -38,7 +41,7 @@ import scala.util.parsing.json.JSON
  * ============================================================ */
 
 
-object Main {
+object VivaldiActor {
 
   case class AreYouAwake()
 
@@ -261,7 +264,7 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
    * @param numberOfNodes number of nodes to return. By default we return one node
    * @return a Sequence of the closest nodes
    */
-  @depricated 
+  @deprecated
   def getCloseNodesFrom(origin: nodeInfo, excluded: Set[nodeInfo] , numberOfNodes: Int ): Seq[nodeInfo] = {
       // we just have to compute the distances between the reference and the nodes in memory, sort them, and send the n closest without excluded nodes
       val relativeDistancesSeq = closeNodes.map(node => node.copy(distanceFromSelf = computeDistanceBtw(origin.coordinates,this.coordinates)))
