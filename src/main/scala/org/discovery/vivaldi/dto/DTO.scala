@@ -37,12 +37,7 @@ trait nodeInfo {
  * @param coordinates
  * @param ping
  */
-case class RPSInfo(id: Long, node: ActorRef,  coordinates: Coordinates, ping: Long) extends nodeInfo {
-  override def equals(that: Any): Boolean = that match {
-    case rpsInfo:RPSInfo if(rpsInfo.id == this.id) => true
-    case _ => false
-  }
-}
+case class RPSInfo(id: Long, node: ActorRef,  coordinates: Coordinates, ping: Long) extends nodeInfo
 
 /**
  * Class containing the information about a node and its distance from the current node.

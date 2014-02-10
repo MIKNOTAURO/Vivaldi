@@ -18,6 +18,4 @@ libraryDependencies += "ch.qos.logback" % "logback-classic" % "1.0.13"
 
 libraryDependencies += "net.databinder.dispatch" %% "dispatch-core" % "0.11.0"
 
-libraryDependencies += "net.liftweb" %% "lift-json" % "2.5.1"
-
 lazy val logback = "ch.qos.logback" % "logback-classic" % "1.0.13"

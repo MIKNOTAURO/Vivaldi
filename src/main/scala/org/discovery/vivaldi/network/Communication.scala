@@ -1,6 +1,6 @@
 package org.discovery.vivaldi.network
 
-import akka.actor.{ActorPath, ActorRef, Actor}
+import akka.actor.{ActorRef, Actor}
 import akka.event.Logging
 import org.discovery.vivaldi.dto._
 import scala.concurrent.Future
@@ -14,11 +14,9 @@ import org.discovery.vivaldi.dto.DoRPSRequest
 import org.discovery.vivaldi.network.Communication.Pong
 import org.discovery.vivaldi.network.Communication.NewRPS
 import scala.util.Success
-import scala.util.Failure
 import org.discovery.vivaldi.dto.FirstContact
 import org.discovery.vivaldi.dto.UpdatedRPS
 import org.discovery.vivaldi.dto.RPSInfo
-import java.io.{InputStreamReader, BufferedReader}
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -96,40 +94,7 @@ class Communication(id: Long, vivaldiCore: ActorRef, main: ActorRef) extends Act
 
   //overwritten in fake ping class
   def calculatePing(sendTime:Long,otherInfo:RPSInfo):Long = {
-
-    // Quick'n dirty fix: call to ping cmd
-    val actorRefStringValue = otherInfo.toString
-    val pattern="""DvmsSystem@(.*):""".r
-    var remoteNodeIp: String = "127.0.0.1"
-
-    pattern.findAllIn(actorRefStringValue).matchData.foreach (
-      m => remoteNodeIp = m.group(1)
-    )
-
-    val shellCmd: Array[String] = Array(
-      "/bin/sh",
-      "-c",
-      s"ping -c 1 $remoteNodeIp | grep -e 'time=.*ms' | sed 's/^.*time=//g' | sed 's/ ms//g'"
-    );
-
-    val runtime: Runtime = Runtime.getRuntime()
-    val p:Process = runtime.exec(shellCmd)
-
-    val in: BufferedReader = new BufferedReader(new InputStreamReader(p.getInputStream()))
-    val result: String = in.readLine()
-
-    val pingResult: Long = try {
-      result.toDouble.toLong
-
-    } catch {
-      case e: Throwable =>
-        log.error("Cannot compute ping value => -1")
-        0
-    }
-
-    log.info(s"Ping-Pong with ${otherInfo.id} => $pingResult ms (shell output: $result)")
-
-    pingResult+1
+    System.currentTimeMillis()-sendTime
   }
 
   def contactNodes(numberOfNodesToContact: Int) {
@@ -158,9 +123,6 @@ class Communication(id: Long, vivaldiCore: ActorRef, main: ActorRef) extends Act
         vivaldiCore ! UpdatedRPS(newRPS)
         rps = mixRPS(newInfos)
       }
-      case Failure(x) =>
-        log.error("RPS request failed!"+x)
-        x.printStackTrace()
       case x => log.error("RPS request failed! "+x)
     }
   }
