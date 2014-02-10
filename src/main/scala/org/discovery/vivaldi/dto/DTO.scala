@@ -82,6 +82,10 @@ case class DeleteCloseNode(nodeToDelete: RPSInfo)
 
 case class DoRPSRequest(newInfo:RPSInfo,numberOfNodesToContact: Int) extends CommunicationMessage // System-Network Message
 
+/**
+  * Message to tell Vivaldi the first node to contact.
+  * @param node ActorRef of the first node to contact.
+  */
 case class FirstContact(node: ActorRef) extends CommunicationMessage //System-Network Message
 
 case class UpdatedRPS(rps: Iterable[RPSInfo]) // Network-Vivaldi Message
