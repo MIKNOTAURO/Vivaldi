@@ -7,7 +7,7 @@ import scala.concurrent.duration._
 import org.discovery.vivaldi.dto._
 import org.discovery.vivaldi.network.{CommunicationMessage, Communication}
 import scala.math._
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{Await, ExecutionContext}
 import ExecutionContext.Implicits.global
 import org.discovery.vivaldi.dto.Coordinates
 import org.discovery.vivaldi.dto.DoRPSRequest
@@ -17,7 +17,10 @@ import org.discovery.vivaldi.dto.UpdatedCoordinates
 import org.discovery.vivaldi.network.Communication.Ping
 import dispatch._
 import scala.util.parsing.json.JSON
-
+import org.discovery.vivaldi.system.VivaldiActor._
+import akka.util.Timeout
+import akka.pattern.AskTimeoutException
+import akka.pattern.ask
 /* ============================================================
  * Discovery Project - AkkaArc
  * http://beyondtheclouds.github.io/
@@ -37,6 +40,15 @@ import scala.util.parsing.json.JSON
  * limitations under the License.
  * ============================================================ */
 
+
+object VivaldiActor {
+
+  case class AreYouAwake()
+
+  case class IAmAwake(closeNodes: Seq[CloseNodeInfo])
+
+}
+
 class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = None) extends Actor {
 
   val log = Logging(context.system, this)
@@ -51,7 +63,7 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
 
   val config = context.system.settings.config.getConfig("vivaldi.system")
   val configInit = config.getConfig("init")
-  val numberOfCloseNodes = config.getInt("closeNodes.size")
+  var numberOfCloseNodes = config.getInt("closeNodes.size")
 
   //variables related to monitoring
   val monitoringActivated : Boolean = context.system.settings.config.getBoolean("vivaldi.system.monitoring.activated")
@@ -175,9 +187,8 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
     case DeleteCloseNode(toDelete) => deleteCloseNode(toDelete)
 
     /* routing messages to child actors */
-    case communicationMessage: CommunicationMessage =>
-      network forward communicationMessage
-
+    case c: CommunicationMessage => network forward c
+    case a: AreYouAwake => sender ! IAmAwake(closeNodes)
     /* Unknown message => log */
     case msg =>
       outgoingActor match {
@@ -185,16 +196,73 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
         case None => log.info(s"Unknown Message: $msg")
       }
   }
+  /**
+   * Check is a node is responding and if so retrieve its closeNodes table have more information
+   * @param info Node to contact
+   * @return true if the node is responding and false otherwise
+   */
+  def isAwake(info: nodeInfo): Boolean = {
+    implicit val timeout = Timeout(5 seconds)
+    val response = info.node ? AreYouAwake()
+    try {
+      Await.result(response, 6 seconds) match {
+        case r: IAmAwake => {
+          log.debug(s"Node $info is well, processing closeNode table")
+          mergeCloseNodesTable(r.closeNodes)
+          true
+        }
+      }
+    } catch {
+      case e: AskTimeoutException => {
+        log.warning(s"Node $info is not responding")
+        false
+      }
+      case exp: Throwable => {
+        log.error("Unknown exception", exp)
+        false
+      }
+    }
+  }
 
   /**
+   * Merges the table in parameter with the local closeNodes table
+   * @param table closeNodes table to merge the local one with
+   */
+  def mergeCloseNodesTable(table: Seq[CloseNodeInfo]) {
+    val updatedTable = table.map(node => node.copy(distanceFromSelf = computeDistanceBtw(this.coordinates, node.coordinates)))
+    closeNodes = (closeNodes ++ updatedTable).sorted.take(numberOfCloseNodes)
+  }
+  /**
    * Method that retrieves the closest nodes from self
-   * @param excluded excluded nodes from the result by default nothing is excluded
-   * @param numberOfNodes number of nodes to return by default we return one node
-   * @return a Sequence of the closest nodes
+   * @param excluded excluded nodes from the result 
+   * @param numberOfNodes number of nodes to return 
+   * @return a Sequence of the closest nodes. If the number of nodes required is bigger
+   *         than the number of nodes in the sequence, the entire table is returned.
+   *         The maximum number of nodes is then updated to the amount of nodes required
    */
   def getCloseNodesToSelf(excluded: Set[nodeInfo], numberOfNodes: Int): Seq[nodeInfo] = {
-    // we take as a reference the current node, we only have to retrieve the n first elements of the list without the excluded nodes
-    closeNodes.sorted.filterNot(n => excluded.exists(m => m.id == n.id)).take(numberOfNodes)
+    //first we need to check the size we use
+    if (numberOfNodes > numberOfCloseNodes){
+      numberOfCloseNodes = numberOfNodes
+      getCloseNodesToSelf(excluded,numberOfNodes)
+    }else{
+      // we take as a reference the current node, we only have to retrieve the n first elements of the list without the excluded nodes
+      val currentCloseNodes = closeNodes.filterNot(excluded contains)
+      val partition = currentCloseNodes.splitAt(numberOfNodes)
+      val test = isAwake(partition._1.head)
+      var awakeCloseNodes = partition._1.filter(isAwake) // we test all the nodes, some dead note are possibly filtered
+      var remainingCloseNodes = partition._2
+
+      while (awakeCloseNodes.size < numberOfNodes && !remainingCloseNodes.isEmpty) { // while we don't have the correct number of nodes we add them for the second part of the closeNodes list
+        val info = remainingCloseNodes.head
+        remainingCloseNodes = remainingCloseNodes.tail
+        if (isAwake(info)) {
+          awakeCloseNodes = awakeCloseNodes :+ info
+        }
+      }
+
+      awakeCloseNodes
+    }
   }
 
   /**
@@ -204,10 +272,18 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
    * @param numberOfNodes number of nodes to return. By default we return one node
    * @return a Sequence of the closest nodes
    */
-  def getCloseNodesFrom(origin: nodeInfo, excluded: Set[nodeInfo] , numberOfNodes: Int ): Seq[nodeInfo] = {
-      // we just have to compute the distances between the reference and the nodes in memory, sort them, and send the n closest without excluded nodes
-      val relativeDistancesSeq = closeNodes.map(node => node.copy(distanceFromSelf = computeDistanceBtw(origin.coordinates,this.coordinates)))
-      relativeDistancesSeq.sorted.filterNot(n => excluded.exists(e => e.id == n.id)).take(numberOfNodes)
+  @deprecated
+  def getCloseNodesFrom(origin: nodeInfo, excluded: Set[nodeInfo], numberOfNodes: Int): Seq[nodeInfo] = {
+    // we just have to compute the distances between the reference and the nodes in memory, sort them, and send the n closest without excluded nodes
+    val relativeDistancesSeq = closeNodes.map(node => node.copy(distanceFromSelf = computeDistanceBtw(origin.coordinates, this.coordinates)))
+
+    if (numberOfNodes <= numberOfCloseNodes) {
+      relativeDistancesSeq.sorted.filterNot(excluded contains).take(numberOfNodes)
+    } else {
+      val temp = numberOfCloseNodes
+      numberOfCloseNodes = numberOfNodes
+      relativeDistancesSeq.sorted.filterNot(excluded contains).take(temp)
+    }
   }
 
   /**
