@@ -9,11 +9,7 @@ import org.discovery.vivaldi.network.{CommunicationMessage, Communication}
 import scala.math._
 import scala.concurrent.{Await, ExecutionContext}
 import ExecutionContext.Implicits.global
-import org.discovery.vivaldi.dto.Coordinates
-import org.discovery.vivaldi.dto.DoRPSRequest
-import org.discovery.vivaldi.dto.CloseNodeInfo
-import org.discovery.vivaldi.dto.RPSInfo
-import org.discovery.vivaldi.dto.UpdatedCoordinates
+import org.discovery.vivaldi.dto._
 import dispatch._
 import scala.util.parsing.json.JSON
 import org.discovery.vivaldi.system.VivaldiActor._
@@ -321,8 +317,7 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
 
     closeNodes = closeNodes.sorted.take(numberOfCloseNodes)
 
-    updateCloseNodesMonitoring
-    
+
     log.info(s"[TICK] coordinate: ${newCoordinates}, rps: ${rpsIterable.toList}, closeNodes: ${closeNodes.toList}")
   }
 
