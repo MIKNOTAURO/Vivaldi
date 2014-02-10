@@ -114,30 +114,4 @@ class MainSpec extends TestKit(ActorSystem("testSystem")) with WordSpecLike with
 
   }
 
-  "The main actor for initialization" must {
-
-    val mainActor = TestActorRef(new VivaldiActor("testMain", 0))
-    val changeTime = mainActor.underlyingActor.changeTime
-
-    "not cancel the first scheduler before changeTime" in {
-      within (changeTime-1 seconds){
-        expectNoMsg
-        assertResult(false){
-          mainActor.underlyingActor.schedulerRPSFirst.isCancelled
-        }
-      }
-    }
-
-    "cancel the first scheduler after changeTime" in {
-      within (changeTime-1 seconds, changeTime+1 seconds){
-        expectNoMsg
-        assertResult(true){
-          mainActor.underlyingActor.schedulerRPSFirst.isCancelled
-        }
-        mainActor.underlyingActor.schedulerRPSThen.cancel()
-      }
-    }
-
-  }
-
 }
