@@ -65,7 +65,7 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
 
   val config = context.system.settings.config.getConfig("vivaldi.system")
   val configInit = config.getConfig("init")
-  val numberOfCloseNodes = config.getInt("closeNodes.size")
+  var numberOfCloseNodes = config.getInt("closeNodes.size")
 
   //variables related to monitoring
   val monitoringActivated : Boolean = context.system.settings.config.getBoolean("vivaldi.system.monitoring.activated")
@@ -229,25 +229,33 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
    * Method that retrieves the closest nodes from self
    * @param excluded excluded nodes from the result 
    * @param numberOfNodes number of nodes to return 
-   * @return a Sequence of the closest nodes
+   * @return a Sequence of the closest nodes. If the number of nodes required is bigger
+   *         than the number of nodes in the sequence, the entire table is returned.
+   *         The maximum number of nodes is then updated to the amount of nodes required
    */
   def getCloseNodesToSelf(excluded: Set[nodeInfo], numberOfNodes: Int): Seq[nodeInfo] = {
-    // we take as a reference the current node, we only have to retrieve the n first elements of the list without the excluded nodes
-    val currentCloseNodes = closeNodes.filterNot(excluded contains)
-    val partition = currentCloseNodes.splitAt(numberOfNodes)
-    val test = isAwake(partition._1.head)
-    var awakeCloseNodes = partition._1.filter(isAwake) // we test all the nodes, some dead note are possibly filtered
-    var remainingCloseNodes = partition._2
+    //first we need to check the size we use
+    if (numberOfNodes > numberOfCloseNodes){
+      numberOfCloseNodes = numberOfNodes
+      getCloseNodesToSelf(excluded,numberOfNodes)
+    }else{
+      // we take as a reference the current node, we only have to retrieve the n first elements of the list without the excluded nodes
+      val currentCloseNodes = closeNodes.filterNot(excluded contains)
+      val partition = currentCloseNodes.splitAt(numberOfNodes)
+      val test = isAwake(partition._1.head)
+      var awakeCloseNodes = partition._1.filter(isAwake) // we test all the nodes, some dead note are possibly filtered
+      var remainingCloseNodes = partition._2
 
-    while (awakeCloseNodes.size < numberOfNodes && !remainingCloseNodes.isEmpty) { // while we don't have the correct number of nodes we add them for the second part of the closeNodes list
-      val info = remainingCloseNodes.head
-      remainingCloseNodes = remainingCloseNodes.tail
-      if (isAwake(info)) {
-        awakeCloseNodes = awakeCloseNodes :+ info
+      while (awakeCloseNodes.size < numberOfNodes && !remainingCloseNodes.isEmpty) { // while we don't have the correct number of nodes we add them for the second part of the closeNodes list
+        val info = remainingCloseNodes.head
+        remainingCloseNodes = remainingCloseNodes.tail
+        if (isAwake(info)) {
+          awakeCloseNodes = awakeCloseNodes :+ info
+        }
       }
-    }
 
-    awakeCloseNodes
+      awakeCloseNodes
+    }
   }
 
   /**
@@ -258,10 +266,17 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
    * @return a Sequence of the closest nodes
    */
   @deprecated
-  def getCloseNodesFrom(origin: nodeInfo, excluded: Set[nodeInfo] , numberOfNodes: Int ): Seq[nodeInfo] = {
-      // we just have to compute the distances between the reference and the nodes in memory, sort them, and send the n closest without excluded nodes
-      val relativeDistancesSeq = closeNodes.map(node => node.copy(distanceFromSelf = computeDistanceBtw(origin.coordinates,this.coordinates)))
-      relativeDistancesSeq.sorted.filterNot(n => excluded.exists(e => e.id == n.id)).take(numberOfNodes)
+  def getCloseNodesFrom(origin: nodeInfo, excluded: Set[nodeInfo], numberOfNodes: Int): Seq[nodeInfo] = {
+    // we just have to compute the distances between the reference and the nodes in memory, sort them, and send the n closest without excluded nodes
+    val relativeDistancesSeq = closeNodes.map(node => node.copy(distanceFromSelf = computeDistanceBtw(origin.coordinates, this.coordinates)))
+
+    if (numberOfNodes <= numberOfCloseNodes) {
+      relativeDistancesSeq.sorted.filterNot(excluded contains).take(numberOfNodes)
+    } else {
+      val temp = numberOfCloseNodes
+      numberOfCloseNodes = numberOfNodes
+      relativeDistancesSeq.sorted.filterNot(excluded contains).take(temp)
+    }
   }
 
   /**
