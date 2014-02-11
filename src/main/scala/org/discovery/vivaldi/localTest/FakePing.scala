@@ -1,6 +1,6 @@
 package org.discovery.vivaldi.local
 
-import akka.actor.{ActorSystem, Props, ActorRef}
+import akka.actor.{Kill, ActorSystem, Props, ActorRef}
 import org.discovery.vivaldi.dto.{FirstContact, RPSInfo, Coordinates}
 import org.discovery.vivaldi.system.{VivaldiActor}
 import org.discovery.vivaldi.core.ComputingAlgorithm
@@ -35,13 +35,16 @@ object FakePing {
 
   val log = Logger("Primary")
   var pingTable : Array[Array[Double]] = Array()
+  var coordinatesSeq : Seq[(Coordinates, String)] = Seq()
+  val system : ActorSystem = ActorSystem("testSystem")
+  var actorRefs : Seq[ActorRef] = Seq()
 
   /**
    * Creates the table of pings from given coordinates
    * @param coordinates
    * @return
    */
-  def createTable(coordinates:Seq[(Coordinates, String)]):Array[Array[Double]] =
+  def createTable(coordinates:Seq[(Coordinates, String)]) : Array[Array[Double]] =
     (for(coord1 <- coordinates)
       yield (for (coord2 <- coordinates)
         yield math.hypot(coord2._1.x - coord1._1.x, coord2._1.y - coord1._1.y)*100).toArray).toArray
@@ -52,10 +55,9 @@ object FakePing {
    * @return
    */
   def initActorSystem(coordinates:Seq[(Coordinates, String)]) : Seq[ActorRef] = {
-
+    coordinatesSeq = coordinates
     //Call monitoring to create network
     pingTable = createTable(coordinates)
-    val system = ActorSystem("testSystem")
 
     //Create nodes
     coordinates.zip(0 until coordinates.length).map({
@@ -92,8 +94,36 @@ object FakePing {
     }
   }
 
+  def createNewNode(index : Int) = {
+    val randomIndex = (Random.nextDouble()*(coordinatesSeq.length-1)).toInt
+    var newNode = coordinatesSeq(randomIndex)
+    newNode = (newNode._1, newNode._2 + s"New$index" )
+    coordinatesSeq ++= List(newNode)
+    pingTable = createTable(coordinatesSeq)
+
+    //create actorRef representing the node
+    val newActorRef = system.actorOf(Props(classOf[FakeMain], newNode._2, coordinatesSeq.length.toLong))
+    actorRefs ++= List(newActorRef)
+    newActorRef ! FirstContact(actorRefs(0))
+  }
+
   def addAndDelete(nodes : Seq[ActorRef]) = {
-     
+    actorRefs = nodes
+    Thread.sleep(5000)
+    var index = 1
+    while(index < 10){
+      createNewNode(index)
+      index += 1
+      Thread.sleep(5000)
+    }
+    /*for(i <- 1 to 20) {
+      nodes(i) ! Kill
+    }
+    while(index < 20){
+      createNewNode(index)
+      index += 1
+      Thread.sleep(10000)
+    }*/
   }
 
 }
