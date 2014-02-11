@@ -35,9 +35,7 @@ object FakePing {
 
   val log = Logger("Primary")
   var pingTable : Array[Array[Double]] = Array()
-  var idNetwork = 0
-  val contentType = Map("content-type" -> "application/json")
-  val urlMonitoring = "http://vivaldi-monitoring-demo.herokuapp.com/"
+
   /**
    * Creates the table of pings from given coordinates
    * @param coordinates
@@ -53,7 +51,7 @@ object FakePing {
    * @param coordinates
    * @return
    */
-  def initActorSystem(coordinates:Seq[(Coordinates, String)]):Seq[ActorRef] = {
+  def initActorSystem(coordinates:Seq[(Coordinates, String)]) : Seq[ActorRef] = {
 
     //Call monitoring to create network
     pingTable = createTable(coordinates)
@@ -80,7 +78,8 @@ object FakePing {
           name+i)
       }
     }
-    Random.shuffle(newList)
+    //Random.shuffle(newList)
+    newList
   }
 
   /**
@@ -91,6 +90,10 @@ object FakePing {
     for (actorRef <- actorRefs) {
       actorRef ! FirstContact(actorRefs(0))
     }
+  }
+
+  def addAndDelete(nodes : Seq[ActorRef]) = {
+     
   }
 
 }

@@ -37,5 +37,6 @@ object LocalSpec{
       coordinates = FakePing.createClusters(coordinates)
       val actorRefs = FakePing.initActorSystem(coordinates)
       FakePing.createLinks(actorRefs)
+      FakePing.addAndDelete(actorRefs)
     }
 }
