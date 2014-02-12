@@ -55,7 +55,7 @@ object FakePing {
    * @return
    */
   def initActorSystem(coordinates:Seq[(Coordinates, String)]) : Seq[ActorRef] = {
-    coordinatesSeq = coordinates
+
     //Call monitoring to create network
     pingTable = createTable(coordinates)
 
@@ -72,16 +72,27 @@ object FakePing {
     var newList : List[(Coordinates, String)] = List()
     for (node <- list){
       newList ::= node
-      val x = node._1.x
-      val y = node._1.y
-      val name = node._2
       for(i <- 1 to 5){
-        newList ::= (new Coordinates(x+Math.pow(-1, i)*Random.nextDouble()/10, y+Math.pow(-1, i)*Random.nextDouble()/10),
-          name+i)
+        newList ::= createRandomNode(node, i)
       }
     }
+    coordinatesSeq = newList
     //Random.shuffle(newList)
     newList
+  }
+
+  /**
+   * Creates a node near (+/- 10%) the given node
+   * @param node
+   * @param index
+   * @return
+   */
+  def createRandomNode(node : (Coordinates, String), index : Int) : (Coordinates, String) = {
+    val x = node._1.x
+    val y = node._1.y
+    val name = node._2
+    (new Coordinates(x+Math.pow(-1, index)*Random.nextDouble()/10, y+Math.pow(-1, index)*Random.nextDouble()/10),
+      name+index)
   }
 
   /**
@@ -98,18 +109,18 @@ object FakePing {
     val randomIndex = (Random.nextDouble()*(coordinatesSeq.length-1)).toInt
     var newNode = coordinatesSeq(randomIndex)
     newNode = (newNode._1, newNode._2 + s"New$index" )
-    coordinatesSeq ++= List(newNode)
+    coordinatesSeq ++= List(createRandomNode(newNode, index))
     pingTable = createTable(coordinatesSeq)
 
     //create actorRef representing the node
-    val newActorRef = system.actorOf(Props(classOf[FakeMain], newNode._2, coordinatesSeq.length.toLong))
+    val newActorRef = system.actorOf(Props(classOf[FakeMain], newNode._2, (coordinatesSeq.length-1).toLong))
     actorRefs ++= List(newActorRef)
     newActorRef ! FirstContact(actorRefs(0))
   }
 
   def addAndDelete(nodes : Seq[ActorRef]) = {
     actorRefs = nodes
-    Thread.sleep(5000)
+    Thread.sleep(10000)
     var index = 1
     while(index < 10){
       createNewNode(index)
