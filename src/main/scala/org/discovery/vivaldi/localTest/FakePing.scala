@@ -127,14 +127,14 @@ object FakePing {
       index += 1
       Thread.sleep(5000)
     }
-    /*for(i <- 1 to 20) {
+    for(i <- 0 to 5) {
       nodes(i) ! Kill
     }
     while(index < 20){
       createNewNode(index)
       index += 1
       Thread.sleep(10000)
-    }*/
+    }
   }
 
 }
