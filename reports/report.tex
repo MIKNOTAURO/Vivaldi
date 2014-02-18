@@ -5,52 +5,42 @@
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amssymb}
+\usepackage{hyperref}
+
 \title{Projet d'option GSI Vivaldi \\ Rapport final}
 \author{Nicolas Joseph, Raphaël Gaschignard\\ Guillaume Blondeau, Cyprien Quilici, Jacob Tardieu}
 
 \begin{document}
 \maketitle
-\section{Présentation du projet}
-\subsection{\texttt{DisCoVEry}}
+\section{Le Contexte}
 
-Le Projet \texttt{DisCoVEry} est un projet qui est né suite à l’impulsion du département de recherche en informatique de l'École des Mines de Nantes. Ce projet consiste à explorer ce que pourrait être le modèle d’après cloud qui est en pleine expansion. En effet, il apparaît que ce modèle est construit autour de centre de données centralisés qui eux même peuvent être excentrés géographiquement des zones d’utilisation. De cette remarque vient  le modèle \texttt{DisCoVEry} : rapporter les serveurs auprès des utilisateurs. Plus précisément les rapporter au niveau des différents noeuds de réseau, de manière à construire un cloud complètement décentralisé.
+Le projet s'est déroulé est en réalité un sous-projet au projet \texttt{DisCoVEry}. Ce projet qui est né suite à l’impulsion du département de recherche en informatique de l'École des Mines de Nantes et consiste à explorer ce que pourrait être le modèle d’après cloud qui est en pleine expansion. En effet, il apparaît que ce modèle est construit autour de centre de données centralisés qui eux même peuvent être excentrés géographiquement des zones d’utilisation. De cette remarque vient  le modèle \texttt{DisCoVEry} : rapporter les serveurs auprès des utilisateurs. Plus précisément les rapporter au niveau des différents noeuds de réseau, de manière à construire un cloud complètement décentralisé.
 
-\subsection{Algorithme \texttt{Vivaldi}}
-L'algorithme \texttt{Vivaldi} \cite{vivaldi} est un algorithme distribué qui permet  de donner à un ensemble de noeuds interconnectés des coordonnées dans un plan en fonction de leur éloignement physique.
-\texttt{Vivaldi} fonctionne de manière décentralisée. Chaque noeud a sa position qui est déterminée dans l’espace. Cette détermination passe par une simulation physique d’un système de ressorts . Chaque noeud calcule son RTT (Round Trip Time) par rapport à un certain nombre de noeuds (pas tous !), et modifie des ressorts dans le système pour représenter ce RTT. L’erreur par rapport à sa position dans le système est ensuite calculée. Cette erreur permet au “ressort” de s’ajuster et donc le noeud bouge en position.
-Ensuite, une fois les positions obtenues, les noeuds les plus proches sont calculés grâce à un algorithme de parcours de graphe, dans lequel il y a un partage d'information de position entre noeuds.
+\section{La Problematique}
+Au sein d'un réseau de type cloud, il faut pouvoir migrer des VM \footnote{Machines Virtuelles} sur des machines differentes grâce à une notion de localité. C'est là ou notre projet intervient. Grâce à un algorythme prédéfinie, Vivaldi, notre brique logicielle doit être capable de fournir les noeuds les plus proches de la machine courante.\\
 
-\section{Objectifs}
-
-\subsection{Objectifs initiaux}
-Le principal objectif de ce projet est d'implémenter l'algorithme \texttt{Vivaldi} au sein du projet \texttt{DisCoVEry}. Cet algorithme servira à déterminer la machine la plus proche par rapport à la machine courante.\\
-
-Pour cela, quatre tâches seront réalisées :
-\begin{itemize}
-\item Mise en \oe uvre du réseau logique Vivaldi en suivant un modèle de programmation de type acteur
-\item Mise en \oe uvre d’une API permettant d’exploiter cette notion de distance
-depuis les mécanismes de plus haut niveau
-\item Mise en \oe uvre d’un mécanisme permettant le parcours du réseau logique de manière efficace (i.e., sur une notion de plus court chemin) en s’appuyant sur l’API bas niveau
-\item Validation du mécanisme de parcours au sein de la proposition DVMS
-\end{itemize}
-
-\subsection{Objectifs accomplis}
-
-\section{Architecture du projet}
-
-\section{Résultats}
-
-\subsection{Avec les tests locaux}
-
-\subsection{Sur Grid'5000}
+Cette brique logicielle devait être completement indépendante des autres systèmes \texttt{DisCoVEry} de manière à pouvoir être remplacée facilement le cas échéant.
 
 \section{Méthodologie}
-Ce projet sera réalisé en autonomie avec des réunions régulières suivant une méthode agile. Il consistera en la contribution au projet open source \texttt{DisCoVEry}, notamment en ajoutant l'algorithme \texttt{Vivaldi} au projet \texttt{AkkaArc}. \texttt{Vivaldi} devra être capable de remplacer l'implémentation de \texttt{Chord} actuellement en place sans impacter le fonctionnement extérieur, notamment la partie concernant les testes déjà codés.
+\subsection{Gestion de Projet}
+Ce projet a été réalisé en autonomie avec des réunions régulières suivant une méthode de développement agile. Nous reviendront plus en détail sur le détail de la méthodologie de développement dans la partie \ref{subsec:dev}. Nous avons choisi un chef de projet qui avait un rôle de management administratif du projet. Il a géré une partie des relations de l'équipe avec les tuteurs et les éléments de gestion de projet comme le suivi d'avancement des differentes tâches, la répartition des tâches ...\\
 
-Comme pour le reste du projet \texttt{AkkaArc}, le language \texttt{Scala} sera utilisé avec l'aide d'\texttt{Akka}.\\
+Nous avons utilisés plusieurs outils en ligne pour la gestion de projet :
+\begin{itemize}
+\item \href{https://www.trello.com}{Trello}
+\item \href{http://ppulse.f}{Propulse}
+\end{itemize}
 
-Des livrables témoignant de l'avancement du projet et servant de documentation seront rédigés au cours du développement.
-Plus précisément, le Cahier d'Analyse et de Conception définira précisément les étapes du développement, les technologies utilisées et les livrables fournis.
+Nous avons commencé par utiliser Trello pour mettre en place le cahier des charges et les premières briques de base de Vivaldi et mettre en place differentes dates de rendu. Nous avons ensuite basculé sur Propulse, qui nous semblait un outil un peu plus conventionnel et utile que Trello pour la fin du projet.\\
+
+Nous avons aussi régulièrement fait des réunions avec les differents acteurs du projet, à la fois les clients et les tuteurs école.
+
+\subsection{Developpement}
+\label{subsec:dev}
+
+\section{Les Résultats}
+
+\section{Le Bilan du projet}
 
 \begin{thebibliography}{9}
 
