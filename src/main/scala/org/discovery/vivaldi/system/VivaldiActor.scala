@@ -148,9 +148,10 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
     if (monitoringActivated) {
       var jsonList : List[JObject] = List()
       for (closeNode <- closeNodes) {
-        jsonList ::= ("localNodeId" -> id) ~ ("distantNodeId" -> closeNode.id) ~ ("distance" -> closeNode.distanceFromSelf)
+        jsonList ++= List(("localNodeId" -> id) ~ ("distantNodeId" -> closeNode.id) ~ ("distance" -> closeNode.distanceFromSelf))
       }
       val json = compact(JsonAST.render(jsonList))
+      log.info(s"Close nodes json : $json")
       makePostRequest(json, "closeNodes/list")
     }
   }
