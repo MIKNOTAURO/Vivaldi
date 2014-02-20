@@ -14,14 +14,14 @@
 \maketitle
 \section{Contexte}
 
-Le projet est en réalité un sous-projet au projet \texttt{DisCoVEry}. Il est né suite à l’impulsion du département de recherche en informatique de l'École des Mines de Nantes et consiste en une amélioration du modèle de cloud computing courrant. En effet, il apparaît que ce modèle est construit autour de centre de données centralisés qui sont excentrés géographiquement des zones d’utilisation. De cette remarque vient  le modèle proposé par \texttt{DisCoVEry} : rapprocher les serveurs des utilisateurs. Plus précisément les réduire à un réseau de mini-data center présents au niveau des différents noeuds de réseau, de manière à construire un cloud complètement décentralisé dont les serveurs sont proches des lieux d'utilisation.\\
+Le projet est en réalité un sous-projet au projet \texttt{DisCoVEry}. Il est né suite à l'impulsion du département de recherche en informatique de l'École des Mines de Nantes et consiste en une amélioration du modèle de cloud computing courant. En effet, il apparaît que ce modèle est construit autour de centre de données centralisés qui sont excentrés géographiquement des zones d’utilisation. De cette remarque vient  le modèle proposé par \texttt{DisCoVEry} : rapprocher les serveurs des utilisateurs. Plus précisément les réduire à un réseau de mini-data center présents au niveau des différents n\oe uds de réseau, de manière à construire un cloud complètement décentralisé dont les serveurs sont proches des lieux d'utilisation.\\
 
-Rappelons que le principe du cloud computing est la virtualisation de machines sur des machines physiques. Dans un système de cloud il faut pouvoir migrer les machines virtuelles d'une machine physique à l'autre. Dans un centre de donnée cette migration se fait sur le réseau local et est donc tranparente. Dans le système proposé par l'équipe de recherche de \texttt{Discovery} il faut pouvoir effectuer des migrations au sein du réseau sur de longues distances. La notion de localité devient donc prépondérante pour améliorer les performances du systèmes. On préfére migrer une machine virtuelle sur un autre serveur d'un même cluster plutôt que sur un serveur distant de plusieurs centaines de kilomêtres. 
+Rappelons que le principe du cloud computing est la virtualisation de machines sur des machines physiques. Dans un système de cloud il faut pouvoir migrer les machines virtuelles d'une machine physique à l'autre. Dans un centre de données cette migration se fait sur le réseau local et est donc transparente. Dans le système proposé par l'équipe de recherche de \texttt{Discovery} il faut pouvoir effectuer des migrations au sein du réseau sur de longues distances. La notion de localité devient donc prépondérante pour améliorer les performances du systèmes. On préfère migrer une machine virtuelle sur un autre serveur d'un même cluster plutôt que sur un serveur distant de plusieurs centaines de kilomètres. 
 
 \section{Problématique}
-Il faut donc être capable de determiner quels sont les machines les plus proches de la machine courante au sein du réseau. Une première approche consisterai à pinger l'ensemble des noeuds pour determiner les distances relatives. Cependant, cette approche est très coûteuse en terme de communication réseau et c'est pour répondre à cette problématique notre projet intervient. Grâce à un algorithme prédéfini, Vivaldi, notre brique logicielle doit être capable de fournir les n\oe uds les plus proches de la machine courante sans avoir contacter toutes les machines du réseau.\\
+Il faut donc être capable de déterminer quels sont les machines les plus proches de la machine courante au sein du réseau. Une première approche consisterai à \textit{ping} l'ensemble des n\oe uds pour déterminer les distances relatives. Cependant, cette approche est très coûteuse en terme de communication réseau et c'est pour répondre à cette problématique notre projet intervient. Grâce à un algorithme prédéfini, Vivaldi, notre brique logicielle doit être capable de fournir les n\oe uds les plus proches de la machine courante sans avoir contacter toutes les machines du réseau.\\
 
-Cette brique logicielle devait être complètement indépendante des autres systèmes \texttt{DisCoVEry} de manière à pouvoir être remplacée facilement le cas échéant. Quatre tâches ont été définies au debut du projet par le client pour définir notre travail.
+Cette brique logicielle devait être complètement indépendante des autres systèmes \texttt{DisCoVEry} de manière à pouvoir être remplacée facilement le cas échéant. Quatre tâches ont été définies au début du projet par le client pour définir notre travail.
 
 \begin{itemize}
 \item Mise en \oe uvre du réseau logique Vivaldi en suivant un modèle de programmation de type acteur
@@ -48,7 +48,7 @@ Nous avons commencé par utiliser Trello pour mettre en place le cahier des char
 
 Nous avons aussi régulièrement fait des réunions avec les différents acteurs du projet, à la fois les clients et les tuteurs école.\\
 
-\texttt{GitHub}, en plus de nous servir de gestionnaire de version, nous a aussi servit de gestionnaire de bug. Jonathan Pastor a pu l'utiliser pour nous signaliser des bugs potentiels qu'il a pu rencontrer dans le code. Les notifications associées nous ont permis d'être réactifs sur la correction des bugs.
+\texttt{GitHub}, en plus de nous servir de gestionnaire de version, nous a aussi servi de gestionnaire de bugs. Jonathan Pastor a pu l'utiliser pour nous signaliser des bugs potentiels qu'il a pu rencontrer dans le code. Les notifications associées nous ont permis d'être réactifs sur leur correction.
 
 \subsection{Développement}
 \label{subsec:dev}
@@ -65,17 +65,17 @@ Le développement a donc pu commencer pour un premier sprint dans un cadre défi
 
 Une fois toutes les fonctionnalités développées et testées de manière indépendante, nous avons développé un test local global de manière à valider le bon fonctionnement et la stabilité de notre brique logicielle.\\
 
-Il s'en est suivi une série de sprints de test - fix de manière à corriger les bugs restant sur la plateforme.\\
+Il s'en est suivi une série de sprints de test - fixer de manière à corriger les bugs restant sur la plateforme.\\
 
 En parallèle nous avons aussi décidé de développer un système de monitoring nous permettant d'agréger des données sur le système distribué que nous étions en train de développer. Cela nous a permis de vérifier que le comportement du réseau Vivaldi était celui attendu.
 
 \section{Les Résultats et perspectives}
 Vivaldi a pu être intégrée à \texttt{DVMS} et testée sur le réseau \texttt{Grid 5000}. A l'issue de ces tests, nous avons pu observer que les migrations de machines virtuelles sont effectuées à 80\% dans le même cluster alors qu'avec l'ancien algorithme \texttt{Chord} les délocalisations se faisaient à hauteur de 50\%.\\
 
-En l'état actuel, certains paramêtres du projet peuvent encore être optimisés pour permettre des gains de performances notables. Certaines fonctionnalités peuvent aussi être ajoutées. Il peut être ajouté des notions de localité pour, par exemple, prendre en compte les débits differents ou encore les perfomances "dures" des différents sytèmes.
+En l'état actuel, certains paramètres du projet peuvent encore être optimisés pour permettre des gains de performances notables. Certaines fonctionnalités peuvent aussi être ajoutées. Il peut être ajouté des notions de localité pour, par exemple, prendre en compte les débits différents ou encore les performances "dures" des différents systèmes.
 
 \section{Le Bilan du projet}
-Nous avons pu réaliser ce projet en 380h hommes environ. La charge de travail est restée relativement équilibrée entre les membres du groupe et est restée stable dans le temps. Nous avons aussi pu acquerir un certain nombre de compétences au cours de ce projet :
+Nous avons pu réaliser ce projet en 380h hommes environ. La charge de travail est restée relativement équilibrée entre les membres du groupe et est restée stable dans le temps. Nous avons aussi pu acquérir un certain nombre de compétences au cours de ce projet :
 \begin{itemize}
 \item Scala
 \item Modèle d'acteur avec Akka
