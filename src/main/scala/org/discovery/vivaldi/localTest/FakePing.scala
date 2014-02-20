@@ -76,7 +76,6 @@ object FakePing {
       }
     }
     coordinatesSeq = newList
-    //Random.shuffle(newList)
     newList
   }
 

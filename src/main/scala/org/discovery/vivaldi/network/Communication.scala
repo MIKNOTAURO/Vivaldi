@@ -104,9 +104,9 @@ class Communication(id: Long, vivaldiCore: ActorRef, main: ActorRef) extends Act
    val responses: Future[Set[Option[Pong]]] = Future sequence asks
 
     responses.onComplete {
-      case Success(set) => {
+      case Success(recievedResponses) => {
         //remove all of the failed asks (represented by none)
-        val filteredResponses = set.filter(_.isDefined).map(_.get)
+        val filteredResponses = recievedResponses.filter(_.isDefined).map(_.get)
         //RPSInfos to send back to our close node mechanism
         val updatedRPSInfos  = filteredResponses.map{
           case result @ Pong(sendTime,otherInfo,otherRPS) => {
@@ -115,8 +115,9 @@ class Communication(id: Long, vivaldiCore: ActorRef, main: ActorRef) extends Act
             result.copy(selfInfo = newOtherInfo)
           }
         }
-        vivaldiCore ! UpdatedRPS(updatedRPSInfos.map(_.selfInfo))
+
         // update our own RPS
+        vivaldiCore ! UpdatedRPS(updatedRPSInfos.map(_.selfInfo))
         rps = mixRPS(updatedRPSInfos)
 
       }
@@ -129,14 +130,15 @@ class Communication(id: Long, vivaldiCore: ActorRef, main: ActorRef) extends Act
 
    //refactored this out to be able to easily create asks
   def singleAsk(info:RPSInfo):Future[Option[Any]] ={
-    ask(info.node,Ping(System.currentTimeMillis(),myInfo))(10 seconds).map{x=>Some(x)} fallbackTo Future(None)
+    ask(info.node,Ping(System.currentTimeMillis(),myInfo))(10 seconds).map{Some(_)} fallbackTo Future(None)
   }
 
   /**
    * Generates a Future for a ping request. In the case where there is a response, the future contains
-   * a Pong response. In the case that there is no response. or in the case that 
-   * @param info
-   * @return
+   * a Pong response. In the case that there is no response. or in the case that the response is of some unknown
+   * form, this function returns None.
+   * @param info The node to contact
+   * @return The response, if one was recieved and is of the good form
    */
   def askPing(info:RPSInfo): Future[Option[Pong]]= {
     //we ask, if it fails (like in a Timeout, notably), we instead return null
