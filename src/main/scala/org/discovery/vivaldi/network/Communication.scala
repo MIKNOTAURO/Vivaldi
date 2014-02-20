@@ -102,26 +102,28 @@ class Communication(id: Long, vivaldiCore: ActorRef, main: ActorRef) extends Act
     val toContact = rps.take(Math.min(rps.size, numberOfNodesToContact))
     val asks = toContact map askPing
 
-    val updatedAsks: Iterable[Future[Pong]] = asks.map {
+    val updatedAsks: Iterable[Future[Option[Pong]]] = asks.map {
       ask =>
-        for {
+        ((for {
           result <- ask
           if result != null
           Pong(sendTime, otherInfo, otherRPS) = result
         } yield {
           val pingTime = calculatePing(sendTime,otherInfo)
           val newOtherInfo = otherInfo.copy(ping = pingTime)
-          result.copy(selfInfo = newOtherInfo) //update info of ping'd guy
-        }
+          Some(result.copy(selfInfo = newOtherInfo)) //update info of ping'd guy
+        }):Future[Option[Pong]]).recover({case _ => None }) // if None, then no response was recieved
     }
 
     val allAsks = Future sequence updatedAsks
 
     allAsks onComplete {
-      case Success(newInfos: Set[Pong]) => {
-        val newRPS = newInfos.map(_.selfInfo)
+      case Success(newInfos: Set[Option[Pong]]) => {
+        //filter out all the non-responses
+        val filteredNewInfos=newInfos.filter(x => x.isDefined).map(x=>x.get)
+        val newRPS = filteredNewInfos.map(_.selfInfo)
         vivaldiCore ! UpdatedRPS(newRPS)
-        rps = mixRPS(newInfos)
+        rps = mixRPS(filteredNewInfos)
       }
       case x => log.error("RPS request failed! "+x)
     }
@@ -142,7 +144,7 @@ class Communication(id: Long, vivaldiCore: ActorRef, main: ActorRef) extends Act
         }
         else {
 
-          log.error("Can't figure out response type " + result.toString)
+          log.error("Can't figure out response type ")
           main ! DeleteCloseNode(info)
           null
         }
