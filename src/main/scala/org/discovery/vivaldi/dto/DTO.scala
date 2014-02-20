@@ -29,6 +29,11 @@ trait nodeInfo {
   val id: Long
   val node: ActorRef
   val coordinates: Coordinates
+
+  override def equals(obj: Any) = obj match {
+    case that: CloseNodeInfo =>  this.id == that.id
+    case _ => false
+  }
 }
 
 /**
@@ -47,11 +52,6 @@ case class RPSInfo(id: Long, node: ActorRef,  coordinates: Coordinates, ping: Lo
  */
 case class CloseNodeInfo(id: Long, node: ActorRef, coordinates: Coordinates, distanceFromSelf: Double) extends nodeInfo with Ordered[CloseNodeInfo] {
   override def compare(that: CloseNodeInfo) = (this.distanceFromSelf - that.distanceFromSelf).signum
-
-  override def equals(obj: Any) = obj match {
-    case that: CloseNodeInfo =>  this.node.path == that.node.path
-    case _ => false
-  }
 }
 
 case class Coordinates(x: Double, y: Double) {
@@ -61,6 +61,14 @@ case class Coordinates(x: Double, y: Double) {
 
   def add(that: Coordinates): Coordinates = {
     Coordinates(this.x + that.x, this.y + that.y)
+  }
+
+  def substract(that: Coordinates): Coordinates = {
+    Coordinates(this.x - that.x, this.y - that.y)
+  }
+
+  def diff(that: Coordinates): Double = {
+    this.substract(that).length()
   }
 
   def length(): Double = {
@@ -107,3 +115,7 @@ case class NextNodesToSelf(excluded: Set[nodeInfo] = Set(), numberOfNodes: Int =
  * @param numberOfNodes number of nodes to return. 1 by default.
  */
 case class NextNodesFrom(origin: nodeInfo, excluded: Set[nodeInfo] = Set(), numberOfNodes: Int = 1)
+
+case class CurrentCloseNodes(cn : Seq[CloseNodeInfo])
+
+case class CurrentCoordinates(c : Coordinates)
