@@ -1,15 +1,11 @@
 package org.discovery.vivaldi.local
 
 import akka.actor._
-import org.discovery.vivaldi.dto.{FirstContact, RPSInfo, Coordinates}
 import org.discovery.vivaldi.system.{VivaldiActor}
 import org.discovery.vivaldi.core.ComputingAlgorithm
 import org.discovery.vivaldi.network.Communication
-import dispatch._
 import scala.concurrent.{ExecutionContext}
-import ExecutionContext.Implicits.global
 import akka.event.slf4j.Logger
-import scala.util.parsing.json.JSON
 import scala.util.Random
 import org.discovery.vivaldi.dto.Coordinates
 import org.discovery.vivaldi.dto.FirstContact
