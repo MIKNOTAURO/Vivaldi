@@ -1,6 +1,6 @@
 package org.discovery.vivaldi.local
 
-import akka.actor.{Kill, ActorSystem, Props, ActorRef}
+import akka.actor._
 import org.discovery.vivaldi.dto.{FirstContact, RPSInfo, Coordinates}
 import org.discovery.vivaldi.system.{VivaldiActor}
 import org.discovery.vivaldi.core.ComputingAlgorithm
@@ -11,6 +11,9 @@ import ExecutionContext.Implicits.global
 import akka.event.slf4j.Logger
 import scala.util.parsing.json.JSON
 import scala.util.Random
+import org.discovery.vivaldi.dto.Coordinates
+import org.discovery.vivaldi.dto.FirstContact
+import org.discovery.vivaldi.dto.RPSInfo
 
 /* ============================================================
  * Discovery Project - AkkaArc
@@ -127,8 +130,8 @@ object FakePing {
       index += 1
       Thread.sleep(5000)
     }
-    for(i <- 0 to 5) {
-      nodes(i) ! Kill
+    for(i <- 1 to 5) {
+      nodes(i) ! PoisonPill
     }
     while(index < 20){
       createNewNode(index)
