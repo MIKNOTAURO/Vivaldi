@@ -3,9 +3,9 @@ package org.discovery.vivaldi.network
 import akka.actor.{ActorRef, Actor}
 import akka.event.Logging
 import org.discovery.vivaldi.dto._
-import scala.concurrent.Future
+import scala.concurrent.{Await, Future}
 import akka.pattern.ask
-import scala.util.Random
+import scala.util.{Failure, Random, Success}
 import akka.util.Timeout
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -13,7 +13,6 @@ import org.discovery.vivaldi.network.Communication.Ping
 import org.discovery.vivaldi.dto.DoRPSRequest
 import org.discovery.vivaldi.network.Communication.Pong
 import org.discovery.vivaldi.network.Communication.NewRPS
-import scala.util.Success
 import org.discovery.vivaldi.dto.FirstContact
 import org.discovery.vivaldi.dto.UpdatedRPS
 import org.discovery.vivaldi.dto.RPSInfo
@@ -85,11 +84,11 @@ class Communication(id: Long, vivaldiCore: ActorRef, main: ActorRef) extends Act
     sender ! Pong(ping.sendTime, myInfo, rps)
   }
 
-  def mixRPS(rpsList: Set[Pong]): Set[RPSInfo] = {
+  def mixRPS(rpsList: Iterable[Pong]): Set[RPSInfo] = {
     val rpses = rpsList.flatMap {
       _.rps
     }
-    Random.shuffle(rpses ++ rps).take(rpsSize)
+    Random.shuffle(rpses ++ rps).take(rpsSize).toSet
   }
 
   //overwritten in fake ping class
@@ -100,53 +99,60 @@ class Communication(id: Long, vivaldiCore: ActorRef, main: ActorRef) extends Act
   def contactNodes(numberOfNodesToContact: Int) {
     log.debug(s"Order to contact $numberOfNodesToContact received")
     val toContact = rps.take(Math.min(rps.size, numberOfNodesToContact))
-    val asks = toContact map askPing
+    val asks:Set[Future[Option[Pong]]] = toContact map askPing
 
-    val updatedAsks: Iterable[Future[Option[Pong]]] = asks.map {
-      ask =>
-        ((for {
-          result <- ask
-          if result != null
-          Pong(sendTime, otherInfo, otherRPS) = result
-        } yield {
-          val pingTime = calculatePing(sendTime,otherInfo)
-          val newOtherInfo = otherInfo.copy(ping = pingTime)
-          Some(result.copy(selfInfo = newOtherInfo)) //update info of ping'd guy
-        }):Future[Option[Pong]]).recover({case _ => None }) // if None, then no response was recieved
-    }
+   val responses: Future[Set[Option[Pong]]] = Future sequence asks
 
-    val allAsks = Future sequence updatedAsks
+    responses.onComplete {
+      case Success(set) => {
+        //remove all of the failed asks (represented by none)
+        val filteredResponses = set.filter(_.isDefined).map(_.get)
+        //RPSInfos to send back to our close node mechanism
+        val updatedRPSInfos  = filteredResponses.map{
+          case result @ Pong(sendTime,otherInfo,otherRPS) => {
+            val pingTime = calculatePing(sendTime,otherInfo)
+            val newOtherInfo = otherInfo.copy(ping = pingTime)
+            result.copy(selfInfo = newOtherInfo)
+          }
+        }
+        vivaldiCore ! UpdatedRPS(updatedRPSInfos.map(_.selfInfo))
+        // update our own RPS
+        rps = mixRPS(updatedRPSInfos)
 
-    allAsks onComplete {
-      case Success(newInfos: Set[Option[Pong]]) => {
-        //filter out all the non-responses
-        val filteredNewInfos=newInfos.filter(x => x.isDefined).map(x=>x.get)
-        val newRPS = filteredNewInfos.map(_.selfInfo)
-        vivaldiCore ! UpdatedRPS(newRPS)
-        rps = mixRPS(filteredNewInfos)
       }
-      case x => log.error("RPS request failed! "+x)
+      case Failure(exception) => {
+        log.error("Error with RPS request treatement  with: "+exception)
+      }
     }
+
   }
 
    //refactored this out to be able to easily create asks
-  def singleAsk(info:RPSInfo):Future[Any] ={
-    ask(info.node,Ping(System.currentTimeMillis(),myInfo))(10 seconds) fallbackTo Future(null)
+  def singleAsk(info:RPSInfo):Future[Option[Any]] ={
+    ask(info.node,Ping(System.currentTimeMillis(),myInfo))(10 seconds).map{x=>Some(x)} fallbackTo Future(None)
   }
 
-  def askPing(info:RPSInfo): Future[Pong]= {
+  /**
+   * Generates a Future for a ping request. In the case where there is a response, the future contains
+   * a Pong response. In the case that there is no response. or in the case that 
+   * @param info
+   * @return
+   */
+  def askPing(info:RPSInfo): Future[Option[Pong]]= {
     //we ask, if it fails (like in a Timeout, notably), we instead return null
     val future = singleAsk(info)
     future.map {
-      result =>
-        if (result.isInstanceOf[Pong]) {
-          result.asInstanceOf[Pong]
-        }
-        else {
-
-          log.error("Can't figure out response type ")
+      case Some(result:Pong) =>
+        Some(result)
+      case None => {
+        log.debug("Deleting node :"+info)
+        main ! DeleteCloseNode(info)
+        None
+      }
+      case Some(x) => {
+          log.error("Can't figure out response type,killing node "+info+" : " + x )
           main ! DeleteCloseNode(info)
-          null
+          None
         }
     }
   }
