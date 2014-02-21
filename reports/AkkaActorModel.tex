@@ -16,7 +16,7 @@
 \maketitle
 
 \section{Le language \textsc{Scala}}
-\textsc{Scala} \cite{scala:website} est un language multi-paradigme qui a vu le jour en 2003 à l'École Polytechnique Fédérale de Lausanne. C'est un langage à la fois orienté objet (tel que \textsc{Java}) et mais également fonctionnel. La syntaxe est fortement inspirée de celle de \textsc{Java} et il est possible d'avoir accès à toutes les bibliothèques \textsc{Java}. \textsc{Scala} est prévu pour être compilé en bytecode \textsc{Java}, donc exécutable sur la JVM. L'interopérabilité avec \textsc{Java} est facilitée par le fait qu'il est possible d'utiliser dans un même projet les deux langages (du code \textsc{Scala} peut être invoqué à partir de code \textsc{Java}).
+\textsc{Scala} \cite{scala:website} est un language multi-paradigme qui a vu le jour en 2003 à l'École Polytechnique Fédérale de Lausanne. C'est un langage à la fois orienté objet (tel que \textsc{Java}) et qui est également fonctionnel. La syntaxe est fortement inspirée de celle de \textsc{Java} et il est possible d'avoir accès à toutes les bibliothèques \textsc{Java}. \textsc{Scala} est prévu pour être compilé en bytecode \textsc{Java}, donc exécutable sur la JVM. L'interopérabilité avec \textsc{Java} est facilitée par le fait qu'il est possible d'utiliser dans un même projet les deux langages (du code \textsc{Scala} peut être invoqué à partir de code \textsc{Java}).
 Pour plus de détails sur le langage \textsc{Scala}, voir \cite{wiki:scala} et \cite{scala:website}.
 
 \section{Le framework \textsc{Akka}}
@@ -48,8 +48,8 @@ class GreetingActor extends Actor with ActorLogging {
 
 Deux méthodes sont utilisées pour envoyer des messages à des acteurs : 
 \begin{itemize}
-\item \texttt{send} ou \texttt{!} qui envoie un message et n'attend pas de réponse (\textit{fire and forget}). Cette méthode est non bloquante : une fois utilisée le programme continue son cours sans se soucier de l'effet de celle-ci.
-\item \texttt{ask} ou \texttt{?} qui envoie un message mais récupère la réponse sous forme de \texttt{Future}. Le fait que cette méthode retourne une \texttt{Future} en fait une méthode non bloquante, mais elle donne la possibilité de récupérer une information directement suite à l'envoi du message.\\
+\item \texttt{send} ou \texttt{!}, qui envoie un message et n'attend pas de réponse (\textit{fire and forget}). Cette méthode est non bloquante : une fois utilisée le programme continue son cours sans se soucier de l'effet de celle-ci.
+\item \texttt{ask} ou \texttt{?}, qui envoie un message mais récupère la réponse sous forme de \texttt{Future}. Le fait que cette méthode retourne une \texttt{Future} en fait une méthode non bloquante, mais elle donne la possibilité de récupérer une information directement suite à l'envoi du message.\\
 \end{itemize}
 
 \textsc{Akka} encourage cependant l'utilisation de la méthode \texttt{send} qui correspond parfaitement à la manière de communiquer entre les acteurs.
