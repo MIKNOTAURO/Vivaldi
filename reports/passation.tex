@@ -1,6 +1,6 @@
 \documentclass[11pt,a4paper]{article}
-\usepackage[utf8]{inputenc}
 \usepackage[francais]{babel}
+\usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{amsmath}
 \usepackage{amsfonts}
@@ -36,14 +36,14 @@
 	breaklines=true
 }
 
-\title{Getting Started}
+\title{Getting Started with Vivaldi project}
 \author{Nicolas Joseph, Raphaël Gaschignard\\ Guillaume Blondeau, Cyprien Quilici, Jacob Tardieu}
 
 \begin{document}
 \maketitle
 
 \section{Overview}
-  This document is meant as a "getting started" guide for the \texttt{VivaldiGSI} project, which is an implementation of the Vivaldi algorithm in Scala (hosted on Github \href{https://github.com/BeyondTheClouds/VivaldiGSI}{here}). For more specific information on archtecture decisions , check the project's \verb|README|.
+  This document is meant as a "getting started" guide for the \texttt{VivaldiGSI} project, which is an implementation of the Vivaldi algorithm in Scala (hosted on Github \href{https://github.com/BeyondTheClouds/VivaldiGSI}{https://github.com/BeyondTheClouds/VivaldiGSI}). For more specific information on architecture decisions , check the project's \verb|README|.
   
     This project uses \verb|sbt| as its dependency management and testing system. To generate the intial project files for IntelliJ (our recommended IDE for this project), simply run \verb|sbt gen-idea| in the project root.
     
@@ -51,7 +51,7 @@
 
 \begin{figure}[h]
    \includegraphics[scale=0.4]{VivaldiArchitecture}
-   \caption{\label{acteur} Actor Model}
+   \caption{\label{acteur} Architecture of the Vivaldi projectl}
 \end{figure}
 
 The project is built on top of the message-passing actor model, and the API itself (described in the project's \verb|README|) works through message passing (via Akka's \verb|ask| patter) . Here is an overview of the three actors that make our system. 
@@ -59,7 +59,7 @@ The project is built on top of the message-passing actor model, and the API itse
 	\item[$\bullet$] \verb|VivaldiActor| : This actor is the main overlay for our program, and is the one to which API calls should be sent to. This actor sets up the other actors, sets up timers for which to periodically contact other nodes in our network, and update our information. It contains an array of the nodes which are thought to be closest to this actor.
 	
 	\item[$\bullet$] \verb|Communication| : 
-	   This actor maintains a random set of other nodes in our network (called the RPS). This actor , after receiving a signal from the \verb|VivaldiActor|, will contact all the nodes in this set to generate a new random set (by "pinging" the nodes and receiving their RPSs, and current positions). After receiving this information, it is forwarded to the \verb|ComputingAlgorithm| for it to apply the Vivaldi algorithm.
+	   This actor maintains a random set of other nodes in our network (called the RPS). This actor, after receiving a signal from the \verb|VivaldiActor|, will contact a random subset of nodes from the RPS to generate a new random set (by "pinging" the nodes and receiving their RPSs, and current positions). After receiving this information, it is forwarded to the \verb|ComputingAlgorithm| for it to apply the Vivaldi algorithm.
 		
 	\item[$\bullet$] \verb|ComputingAlgorithm| : This node, after receiving information concerning the position of other nodes in the system, recalculates the current node's position, then sends it to \verb|VivaldiActor| to update its table of the closest nodes in the system.
 \end{itemize}
@@ -91,7 +91,7 @@ aNode ! firstContact(aNode.self)
  	\end{lstlisting}
  \end{itemize}
  
- In any  case, you need to send a \verb|firstContact| message to all nodes, because this is what triggers the schedulers that run all the update code: without this, while nodes can receive information, they will not broadcast their existence in the networks.
+ In any  case, you need to send a \verb|firstContact| message to all nodes, because this is what triggers the schedulers that run all the update code: without this, while nodes can receive information, they will not broadcast their existence in the network.
  
 
 \section{Defining another distance metric}
@@ -143,7 +143,7 @@ A simple way to build this is to do the following:
 \end{itemize}
 
 \section{Monitoring}
-We also built a monitoring application alongside this project. The aim of the monitoring app is to aggregate data from all the distributed nodes to make sure that the system behaves properly. The Monitoring application can be found \href{https://github.com/callicles/VivaldiMonitoringPlay}{here}.\\
+We also built a monitoring application alongside this project. The aim of the monitoring app is to aggregate data from all the distributed nodes to make sure that the system behaves properly. The monitoring application can be found at \href{https://github.com/callicles/VivaldiMonitoringPlay}{https://github.com/callicles/VivaldiMonitoringPlay}.\\
 
 It is very easy to use and deploy. A deploy script is present in the  \texttt{PythonDummyDataGenerator} folder.\\
 
@@ -151,7 +151,7 @@ The following section shows how to configure the application to have the monitor
 
 \section{Configuration}
 
-Various values, such as the log level and links toward the monitoring system, for the project are initialized via a setting files in the project. You can find all these settings in the \texttt{application.conf} of the Vivaldi project.\\
+Various values, such as the log level and links toward the monitoring system for the project are initialized via a setting file in the project. You can find all these settings in the \texttt{application.conf} of the Vivaldi project.\\
 Here is an example of the  configuration to use when you want to see the monitoring :
 
 \begin{minted}[
@@ -218,7 +218,7 @@ vivaldi {
 }
 \end{minted}
 
-As far as the monitoring is concerned, as soon as it is deployed, you just have to create the network you want use. To do so, you can either post a request on the application API or create it manually from the interface. There is a complete API documentation in the README of the GitHub Project. 
+As far as the monitoring is concerned, as soon as it is deployed, you just have to create the network you want to use. To do so, you can either post a request on the application API or create it manually from the interface. There is a complete API documentation in the README of the GitHub Project. 
 
 \section{Where to go from here}
  Here are a couple things we noted that we would have loved to setup, but didn't have the time to do :
