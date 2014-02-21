@@ -1,0 +1,65 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[francais]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{listings}
+\bibliographystyle{plain}
+\title{Akka et le modèle d'acteur}
+\author{Jacob Tardieu}
+
+\begin{document}
+\maketitle
+
+\section{Le language \textsc{Scala}}
+\textsc{Scala} \cite{scala:website} est un language multi-paradigme qui a vu le jour en 2003 à l'École Polytechnique Fédérale de Lausanne. C'est un langage à la fois orienté objet (tel que \textsc{Java}) et mais également fonctionnel. La syntaxe est fortement inspirée de de celle de \textsc{Java} et il est possible d'avoir accès à toutes les bibliothèques \textsc{Java}. \textsc{Scala} est prévu pour être compilé en bytecode \textsc{Java}, donc exécutable sur la JVM. L'intéropérabilité avec \textsc{Java} est facilitée par le fait qu'il est possible d'utiliser dans un même projet les deux langages (du code \textsc{Scala} peut être invoqué à partir de code \textsc{Java}).
+Pour plus de détails sur le langage \textsc{Scala}, voir \cite{wiki:scala} et \cite{scala:website}.
+
+\section{Le framework \textsc{Akka}}
+Le framework \textsc{Akka} \cite{akka:website} est un outil open-source dont le but est de faciliter la contruction d'applications concurrentes et réparties sur la JVM. \textsc{Akka} permet d'utiliser un modèle d'acteurs pour gérer la concurrence.
+
+\subsection{La notion de \texttt{Future}}
+Un outil important apporté par \textsc{Akka} au langage \textsc{Scala} est la notion de \texttt{Future}. Une \texttt{Future} est un objet qui contient une valeur qui n'est pas disponible tout de suite mais qui le sera à un moment donné.
+Cela permet d'écrire du code non bloquant et d'utiliser des \textit{callbacks} afin de traiter l'information au moment où elle est reçue sans avoir à l'attendre pour exécuter le reste du code.
+
+Les \texttt{Future}s permettent donc une parallélisation de manière efficace et non-bloquante. Elles sont maintenant intégrées au langage \textsc{Scala}. Voir \cite{scala:futures} pour plus de détails.
+
+
+\subsection{Les acteurs \textsc{Akka}}
+Les acteurs \textsc{Akka} sont des entités légères qui traitent les messages reçus de manière asynchrone au moment de leur réception (c'est un modèle \textit{event-driven}). La concurrence est donc uniquement gérée par \textit{message passing}, c'est à dire uniquement par les messages : aucune donnée mutable ou mécanisme de synchronisation ne sont utilisés par \textsc{Akka}. 
+
+De plus, les acteurs interagissent de la même manière qu'ils soient sur une même machine ou sur des machines séparées, cela permet très facilement soit d'utiliser plus d'acteurs sur la même machine (\textit{scale up}) soit d'utiliser plus de machines afin de répartir la charge (\textit{scale out}).
+
+Enfin, \textsc{Akka} utilise une hiérarchie entre les acteurs (acteurs parents et acteurs enfants) ce qui permet une supervision et une meilleure tolérance aux pannes.
+
+\subsection{Utilisation des acteurs}
+Un acteur reçoit les messages via une méthode \texttt{receive} et le \textit{pattern matching} permet de les différencier.
+\begin{lstlisting}[language = java]
+class GreetingActor extends Actor with ActorLogging {
+  def receive = {
+	case Greeting(who) => log.info("Hello " + who)
+  }
+}
+\end{lstlisting}
+
+Deux méthodes sont utilisées pour envoyer des messages à des acteurs : 
+\begin{itemize}
+\item \texttt{send} ou \texttt{!} qui envoie un message et n'attend pas de réponse (\textit{fire and forget}). Cette méthode est non bloquante : une fois utilisée le programme continue son cours sans se soucier de l'effet de celle-ci.
+\item \texttt{ask} ou \texttt{?} qui envoie un message mais récupère la réponse sous forme de \texttt{Future}. Le fait que cette méthode retourne une \texttt{Future} en fait une méthode non bloquante, mais elle donne la possiblité de récupérer une information directement suite à l'envoi du message.\\
+\end{itemize}
+
+\textsc{Akka} encourage cependant l'utilisation de la méthode \texttt{send} qui correspond parfaitement à la manière de communiquer entre les acteurs.
+
+\nocite{*}
+\bibliography{AkkaSources}{}
+
+
+
+
+
+
+\end{document}
