@@ -43,9 +43,9 @@
 \maketitle
 
 \section{Overview}
-  This document is meant as a "getting started" guide for the \texttt{VivaldiGSI} project, which is an implementation of the Vivaldi algorithm in Scala (hosted on Github at \verb|https://github.com/BeyondTheClouds/VivaldiGSI|). For more specific information on archtecture decisions , check the project's \verb|README|.
+  This document is meant as a "getting started" guide for the \texttt{VivaldiGSI} project, which is an implementation of the Vivaldi algorithm in Scala (hosted on Github \href{https://github.com/BeyondTheClouds/VivaldiGSI}{here}). For more specific information on archtecture decisions , check the project's \verb|README|.
   
-    This project uses \verb|sbt| as its dependency management and testing system. To generate the intial project files for IntelliJ (our recommended IDE), simply run \verb|sbt gen-idea| in the project root.
+    This project uses \verb|sbt| as its dependency management and testing system. To generate the intial project files for IntelliJ (our recommended IDE for this project), simply run \verb|sbt gen-idea| in the project root.
     
 \section{Architecture}
 
@@ -143,13 +143,17 @@ A simple way to build this is to do the following:
 \end{itemize}
 
 \section{Monitoring}
-We also built a monitoring application alongside this project. The aim of the monitoring app is to aggregate data from all distributed node to make sure that the system behaves properly. The Monitoring application can be found \href{https://github.com/callicles/VivaldiMonitoringPlay}{Here}.\\
+We also built a monitoring application alongside this project. The aim of the monitoring app is to aggregate data from all the distributed nodes to make sure that the system behaves properly. The Monitoring application can be found \href{https://github.com/callicles/VivaldiMonitoringPlay}{here}.\\
 
-It is very easy too use and deploy. You have a deploy script in the  \texttt{PythonDummyDataGenerator} folder.\\
+It is very easy to use and deploy. A deploy script is present in the  \texttt{PythonDummyDataGenerator} folder.\\
 
-As far as configuration goes in the Vivaldi part, you need to activate the monitoring in the configuration file and set up the adress of the server the monitoring is being deployed on. You can find all these settings in the \texttt{application.conf} of the Vivaldi project.\\
+The following section shows how to configure the application to have the monitoring system activated.\\
 
-Here is a proper configuration to use the monitoring :
+\section{Configuration}
+
+Various values, such as the log level and links toward the monitoring system, for the project are initialized via a setting files in the project. You can find all these settings in the \texttt{application.conf} of the Vivaldi project.\\
+Here is an example of the  configuration to use when you want to see the monitoring :
+
 \begin{minted}[
     frame=single,
   ]{yaml}
