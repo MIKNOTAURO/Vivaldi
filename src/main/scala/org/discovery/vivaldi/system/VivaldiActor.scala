@@ -82,44 +82,129 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
     }
   }
 
+//  def createNetwork = {
+//
+//    var networkExists = false
+//
+//    val getNetworks = url(urlMonitoring+"networks/").GET
+//    val resultGetNetworks = Http(getNetworks OK as.String).either
+//    var responseGetNetworks = ""
+//    resultGetNetworks() match {
+//      case Right(content)         => responseGetNetworks = content
+//      case Left(StatusCode(404))  => log.error("Not found")
+//      case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
+//      case _ => log.error("Error")
+//    }
+//    val jsonList = JSON.parseFull(responseGetNetworks).get.asInstanceOf[List[Map[String, Any]]]
+//    log.info(jsonList.toString())
+//    for (item <- jsonList){
+//      val name = item.get("networkName").get.asInstanceOf[String]
+//      if (name == networkName){
+//        networkExists = true
+//        networkId = item.get("id").get.asInstanceOf[Double].toInt
+//      }
+//    }
+//
+//    if (!networkExists) {
+//      val jsonSystem = ("networkName" -> networkName)
+//      val bodySystem = compact(JsonAST.render(jsonSystem))
+//      val responseNetwork = makePostRequest(bodySystem, "networks/")
+//      networkId = JSON.parseFull(responseNetwork).get.asInstanceOf[Map[String, Any]]
+//        .get("id").get.asInstanceOf[Double].toInt
+//      log.info(s"Id network : $networkId")
+//    }
+//
+//  }
+
   def createNetwork = {
 
-    var networkExists = false
+    def getNetworkRequest(): Option[String] = {
+      val getNetworks = url(urlMonitoring + "networks/").GET
+      val resultGetNetworks = Http(getNetworks OK as.String).either
+      resultGetNetworks() match {
+        case Right(content) =>
+          Some(content)
+        case Left(StatusCode(404)) =>
+          log.error("Not found")
+          None
+        case Left(StatusCode(code)) =>
+          log.error("Some other code: " + code.toString)
+          None
 
-    val getNetworks = url(urlMonitoring+"networks/").GET
-    val resultGetNetworks = Http(getNetworks OK as.String).either
-    var responseGetNetworks = ""
-    resultGetNetworks() match {
-      case Right(content)         => responseGetNetworks = content
-      case Left(StatusCode(404))  => log.error("Not found")
-      case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
-      case _ => log.error("Error")
-    }
-    val jsonList = JSON.parseFull(responseGetNetworks).get.asInstanceOf[List[Map[String, Any]]]
-    log.info(jsonList.toString())
-    for (item <- jsonList){
-      val name = item.get("networkName").get.asInstanceOf[String]
-      if (name == networkName){
-        networkExists = true
-        networkId = item.get("id").get.asInstanceOf[Double].toInt
+        case _ =>
+          log.error("Error")
+          None
       }
     }
 
-    if (!networkExists) {
+    def sendCreateNetworkRequest(): Option[String] = {
       val jsonSystem = ("networkName" -> networkName)
       val bodySystem = compact(JsonAST.render(jsonSystem))
-      val responseNetwork = makePostRequest(bodySystem, "networks/")
-      networkId = JSON.parseFull(responseNetwork).get.asInstanceOf[Map[String, Any]]
-        .get("id").get.asInstanceOf[Double].toInt
-      log.info(s"Id network : $networkId")
+      val requestNetwork = url(urlMonitoring + "networks/").POST << bodySystem <:< contentType
+      val resultNetwork = Http(requestNetwork OK as.String).either
+
+      resultNetwork() match {
+        case Right(content) =>
+          Some(content)
+        case Left(StatusCode(404)) =>
+          log.error("Not found")
+          None
+        case Left(StatusCode(code)) =>
+          log.error("Some other code: " + code.toString)
+          None
+        case _ =>
+          log.error("Error")
+          None
+      }
     }
 
+    var networkExists = false
+
+    while (!networkExists) {
+
+      getNetworkRequest() match {
+        case Some(jsonString: String) =>
+          JSON.parseFull(jsonString) match {
+            case Some(jsonList: List[Map[String, Any]]) =>
+              log.info(jsonList.toString())
+              for (item <- jsonList) {
+                (item.get("networkName"), item.get("id")) match {
+                  case (Some(name: String), Some(id: Double)) if (name == networkName) =>
+                    networkId = id.toInt
+                    networkExists = true
+                  case _ =>
+                    log.info(s"createNetwork: network cannot be found: looping! (1), response is {$jsonString}")
+                }
+              }
+            case _ =>
+              log.info(s"createNetwork: network cannot be found: looping! (2), response is {$jsonString}")
+          }
+        case _ =>
+          log.info(s"createNetwork: network cannot be found: looping! (3), response is {None}")
+      }
+
+
+      if (!networkExists) {
+        log.info(s"createNetwork: as network cannot be found: waiting 200ms")
+        Thread.sleep(200)
+        sendCreateNetworkRequest() match {
+          case Some(responseAsJson) =>
+            log.info(s"createNetwork: sendCreateNetworkRequest() => $responseAsJson")
+          case None =>
+            log.info(s"createNetwork: sendCreateNetworkRequest() => None")
+        }
+      }
+    }
+
+    log.info( s"""createNetwork: {"networkId": ${networkId}""")
   }
+
+
 
   def initializeNode = {
 
     //call monitoring to create nodes
-    val jsonRegister = ("nodeName" -> name) ~ ("networkId" -> networkId) ~ ("id" -> id.toInt)
+    val jsonRegister = ("nodeName" -> name) ~ ("networkId" -> networkId) ~ ("id" -> id.toLong)
     val bodyRegister = compact(JsonAST.render(jsonRegister))
     log.info(bodyRegister)
     makePostRequest(bodyRegister, "nodes/withId")
@@ -138,6 +223,7 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
     if (monitoringActivated) {
       val x = coordinates.x
       val y = coordinates.y
+//      val id = 25769820553343l
       val jsonUpdate = ("nodeId" -> id) ~ ("x" -> x) ~ ("y" -> y)
       val bodyUpdate = compact(JsonAST.render(jsonUpdate))
       makePostRequest(bodyUpdate, "coordinates/")
@@ -156,17 +242,22 @@ class VivaldiActor(name: String, id: Long, outgoingActor: Option[ActorRef] = Non
     }
   }
 
-  def makePostRequest(toSend : String, urlToSend : String) = {
+  def makePostRequest(toSend : String, urlToSend : String): Option[String] = {
     val request = url(urlMonitoring+urlToSend).POST << toSend <:< contentType
     val result = Http(request OK as.String).either
-    var toReturn = ""
     result() match {
-      case Right(content)         => toReturn = content
-      case Left(StatusCode(404))  => log.error("Not found")
-      case Left(StatusCode(code)) => log.error("Some other code: " + code.toString)
-      case _ => log.error("Error")
+      case Right(content)         =>
+        Some(content)
+      case Left(StatusCode(404))  =>
+        log.error("Not found")
+        None
+      case Left(StatusCode(code)) =>
+        log.error("Some other code: " + code.toString)
+        None
+      case _ =>
+        log.error("Error")
+        None
     }
-    toReturn
   }
 
   /**
